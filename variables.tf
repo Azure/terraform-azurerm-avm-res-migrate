@@ -6,13 +6,11 @@ variable "location" {
 
 variable "name" {
   type        = string
-  description = "The name of the this resource."
+  description = "The name of the migration resource."
 
   validation {
-    condition     = can(regex("TODO", var.name))
-    error_message = "The name must be TODO." # TODO remove the example below once complete:
-    #condition     = can(regex("^[a-z0-9]{5,50}$", var.name))
-    #error_message = "The name must be between 5 and 50 characters long and can only contain lowercase letters and numbers."
+    condition     = can(regex("^[a-zA-Z0-9][a-zA-Z0-9-]{0,78}[a-zA-Z0-9]$", var.name))
+    error_message = "The name must be 2-80 characters, start and end with alphanumeric, contain only alphanumeric and hyphens."
   }
 }
 
@@ -234,4 +232,292 @@ variable "tags" {
   type        = map(string)
   default     = null
   description = "(Optional) Tags of the resource."
+}
+
+# ========================================
+# MIGRATION-SPECIFIC VARIABLES
+# ========================================
+
+# Operation Mode
+variable "operation_mode" {
+  type        = string
+  description = "The migration operation to perform: discover, initialize, or replicate"
+  default     = "discover"
+
+  validation {
+    condition     = contains(["discover", "initialize", "replicate"], var.operation_mode)
+    error_message = "operation_mode must be one of: discover, initialize, replicate."
+  }
+}
+
+# COMMAND 1: DISCOVER SERVERS Variables
+variable "project_name" {
+  type        = string
+  description = "Azure Migrate project name"
+  default     = null
+}
+
+variable "source_machine_type" {
+  type        = string
+  description = "Source machine type (VMware or HyperV)"
+  default     = "VMware"
+
+  validation {
+    condition     = contains(["VMware", "HyperV"], var.source_machine_type)
+    error_message = "source_machine_type must be either VMware or HyperV."
+  }
+}
+
+variable "appliance_name" {
+  type        = string
+  description = "Appliance name (maps to site name)"
+  default     = null
+}
+
+variable "display_name" {
+  type        = string
+  description = "Source machine display name for filtering"
+  default     = null
+}
+
+variable "machine_name" {
+  type        = string
+  description = "Source machine internal name"
+  default     = null
+}
+
+# COMMAND 2: INITIALIZE INFRASTRUCTURE Variables
+variable "source_appliance_name" {
+  type        = string
+  description = "Source appliance name for AzLocal scenario"
+  default     = null
+}
+
+variable "target_appliance_name" {
+  type        = string
+  description = "Target appliance name for AzLocal scenario"
+  default     = null
+}
+
+variable "cache_storage_account_id" {
+  type        = string
+  description = "Storage Account ARM ID for cache/private endpoint scenario"
+  default     = null
+}
+
+variable "instance_type" {
+  type        = string
+  description = "Migration instance type"
+  default     = "VMwareToAzStackHCI"
+
+  validation {
+    condition     = contains(["HyperVToAzStackHCI", "VMwareToAzStackHCI"], var.instance_type)
+    error_message = "instance_type must be either HyperVToAzStackHCI or VMwareToAzStackHCI."
+  }
+}
+
+variable "policy_name" {
+  type        = string
+  description = "Replication policy name"
+  default     = null
+}
+
+variable "recovery_point_history_minutes" {
+  type        = number
+  description = "Recovery point retention in minutes"
+  default     = 4320 # 72 hours
+}
+
+variable "crash_consistent_frequency_minutes" {
+  type        = number
+  description = "Crash consistent snapshot frequency in minutes"
+  default     = 60 # 1 hour
+}
+
+variable "app_consistent_frequency_minutes" {
+  type        = number
+  description = "Application consistent snapshot frequency in minutes"
+  default     = 240 # 4 hours
+}
+
+variable "source_fabric_id" {
+  type        = string
+  description = "Source replication fabric ARM ID"
+  default     = null
+}
+
+variable "target_fabric_id" {
+  type        = string
+  description = "Target replication fabric ARM ID"
+  default     = null
+}
+
+# COMMAND 3: CREATE REPLICATION Variables
+variable "machine_id" {
+  type        = string
+  description = "Machine ARM ID of the discovered server to migrate"
+  default     = null
+}
+
+variable "machine_index" {
+  type        = number
+  description = "Index of the discovered server from the list (1-based)"
+  default     = null
+
+  validation {
+    condition     = var.machine_index == null || var.machine_index >= 1
+    error_message = "machine_index must be a positive integer (1 or greater)."
+  }
+}
+
+variable "target_vm_name" {
+  type        = string
+  description = "Name of the VM to be created on target"
+  default     = null
+
+  validation {
+    condition     = var.target_vm_name == null || (length(var.target_vm_name) >= 1 && length(var.target_vm_name) <= 64 && can(regex("^[^_\\W][a-zA-Z0-9\\-]{0,63}$", var.target_vm_name)))
+    error_message = "target_vm_name must be 1-64 characters, start with letter/number, contain only letters/numbers/hyphens."
+  }
+}
+
+variable "target_storage_path_id" {
+  type        = string
+  description = "Storage path ARM ID where VMs will be stored"
+  default     = null
+}
+
+variable "target_resource_group_id" {
+  type        = string
+  description = "Target resource group ARM ID for migrated VM resources"
+  default     = null
+}
+
+variable "target_virtual_switch_id" {
+  type        = string
+  description = "Logical network ARM ID for VMs (default user mode)"
+  default     = null
+}
+
+variable "target_test_virtual_switch_id" {
+  type        = string
+  description = "Test logical network ARM ID for VMs"
+  default     = null
+}
+
+variable "target_vm_cpu_cores" {
+  type        = number
+  description = "Number of CPU cores for target VM"
+  default     = null
+
+  validation {
+    condition     = var.target_vm_cpu_cores == null || (var.target_vm_cpu_cores >= 1 && var.target_vm_cpu_cores <= 240)
+    error_message = "target_vm_cpu_cores must be between 1 and 240."
+  }
+}
+
+variable "source_vm_cpu_cores" {
+  type        = number
+  description = "Number of CPU cores from source VM"
+  default     = 2
+}
+
+variable "target_vm_ram_mb" {
+  type        = number
+  description = "Target RAM size in MB"
+  default     = null
+}
+
+variable "source_vm_ram_mb" {
+  type        = number
+  description = "Source RAM size in MB"
+  default     = 4096
+}
+
+variable "is_dynamic_memory_enabled" {
+  type        = bool
+  description = "Whether RAM is dynamic"
+  default     = false
+}
+
+variable "hyperv_generation" {
+  type        = string
+  description = "Hyper-V generation (1 or 2)"
+  default     = "1"
+
+  validation {
+    condition     = contains(["1", "2"], var.hyperv_generation)
+    error_message = "hyperv_generation must be either 1 or 2."
+  }
+}
+
+variable "os_disk_id" {
+  type        = string
+  description = "Operating system disk ID for the source server (default user mode)"
+  default     = null
+}
+
+variable "disks_to_include" {
+  type = list(object({
+    disk_id          = string
+    disk_size_gb     = number
+    disk_file_format = optional(string, "VHDX")
+    is_os_disk       = bool
+    is_dynamic       = optional(bool, true)
+  }))
+  description = "Disks to include for replication (power user mode)"
+  default     = []
+}
+
+variable "nics_to_include" {
+  type = list(object({
+    nic_id            = string
+    target_network_id = string
+    test_network_id   = optional(string)
+    selection_type    = optional(string, "SelectedByUser")
+  }))
+  description = "NICs to include for replication (power user mode)"
+  default     = []
+}
+
+variable "replication_vault_id" {
+  type        = string
+  description = "Replication vault ARM ID (for replicate mode)"
+  default     = null
+}
+
+variable "replication_extension_name" {
+  type        = string
+  description = "Replication extension name (for replicate mode)"
+  default     = null
+}
+
+variable "custom_location_id" {
+  type        = string
+  description = "Custom location ARM ID for Arc"
+  default     = null
+}
+
+variable "source_fabric_agent_name" {
+  type        = string
+  description = "Source fabric agent (DRA) name"
+  default     = null
+}
+
+variable "target_fabric_agent_name" {
+  type        = string
+  description = "Target fabric agent (DRA) name"
+  default     = null
+}
+
+variable "run_as_account_id" {
+  type        = string
+  description = "Run-as account ARM ID"
+  default     = null
+}
+
+variable "target_hci_cluster_id" {
+  type        = string
+  description = "Target HCI cluster ARM ID"
+  default     = null
 }
