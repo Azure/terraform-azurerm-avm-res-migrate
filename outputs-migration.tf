@@ -31,6 +31,12 @@ output "discovered_servers_count" {
   value       = local.is_discover_mode && length(data.azapi_resource_list.discovered_servers) > 0 ? length(try(jsondecode(data.azapi_resource_list.discovered_servers[0].output).value, [])) : 0
 }
 
+# Debug output - raw API response
+output "debug_raw_discovered_servers" {
+  description = "Raw API response for debugging"
+  value       = local.is_discover_mode && length(data.azapi_resource_list.discovered_servers) > 0 ? data.azapi_resource_list.discovered_servers[0].output : null
+}
+
 # ========================================
 # INITIALIZE INFRASTRUCTURE OUTPUTS
 # ========================================

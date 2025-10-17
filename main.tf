@@ -3,54 +3,30 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 #
-# Terraform Module for Azure Local Migration for:
-# 1. Retrieve discovered servers
-# 2. Setup replication infrastructure
-# 3. Create VM replication
+# Terraform Module for Azure Stack HCI Migration
+# Equivalent to Azure CLI Python implementation for:
+# 1. get_discovered_server - Retrieve discovered servers
+# 2. initialize_replication_infrastructure - Setup replication infrastructure
+# 3. new_local_server_replication - Create VM replication
 #
-
-terraform {
-  required_version = ">= 1.5"
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">= 3.71, < 5.0"
-    }
-    azapi = {
-      source  = "azure/azapi"
-      version = ">= 1.9, < 3.0"
-    }
-  }
-}
-
-# Validation for instance_type variable
-variable "instance_type" {
-  description = "The instance type for replication. Must be either HyperVToAzStackHCI or VMwareToAzStackHCI."
-  type        = string
-  validation {
-    condition = contains(["HyperVToAzStackHCI", "VMwareToAzStackHCI"], var.instance_type)
-    error_message = "The instance_type must be either 'HyperVToAzStackHCI' or 'VMwareToAzStackHCI'."
-  }
-}
 
 # ========================================
 # LOCAL VALUES
 # ========================================
 
 locals {
-  role_definition_resource_substring = "/providers/Microsoft.Authorization/roleDefinitions/"
-
   # Determine operation mode
-  is_discover_mode    = var.operation_mode == "discover"
-  is_initialize_mode  = var.operation_mode == "initialize"
-  is_replicate_mode   = var.operation_mode == "replicate"
+  is_discover_mode   = var.operation_mode == "discover"
+  is_initialize_mode = var.operation_mode == "initialize"
+  is_replicate_mode  = var.operation_mode == "replicate"
 
   # Resource group reference
   resource_group_name = var.resource_group_name
 
   # Storage account name generation (similar to Python generate_hash_for_artifact)
-  storage_account_suffix = substr(md5("${var.source_appliance_name}${var.project_name}"), 0, 14)
-  storage_account_name   = "migratersa${local.storage_account_suffix}"
+  # Only calculate if we're in initialize mode to avoid null value errors
+  storage_account_suffix = local.is_initialize_mode && var.source_appliance_name != null ? substr(md5("${var.source_appliance_name}${var.project_name}"), 0, 14) : ""
+  storage_account_name   = local.is_initialize_mode && var.source_appliance_name != null ? "migratersa${local.storage_account_suffix}" : ""
 }
 
 # ========================================
@@ -123,11 +99,11 @@ resource "azapi_update_resource" "vault_identity" {
   type        = "Microsoft.DataReplication/replicationVaults@2024-09-01"
   resource_id = data.azapi_resource.replication_vault[0].id
 
-  body = jsonencode({
+  body = {
     identity = {
       type = "SystemAssigned"
     }
-  })
+  }
 }
 
 # Query replication fabrics
@@ -148,16 +124,16 @@ resource "azapi_resource" "replication_policy" {
 
   schema_validation_enabled = false
 
-  body = jsonencode({
+  body = {
     properties = {
       customProperties = {
-        instanceType                     = var.instance_type
-        recoveryPointHistoryInMinutes    = var.recovery_point_history_minutes
+        instanceType                      = var.instance_type
+        recoveryPointHistoryInMinutes     = var.recovery_point_history_minutes
         crashConsistentFrequencyInMinutes = var.crash_consistent_frequency_minutes
         appConsistentFrequencyInMinutes   = var.app_consistent_frequency_minutes
       }
     }
-  })
+  }
 
   depends_on = [azapi_update_resource.vault_identity]
 }
@@ -219,7 +195,7 @@ resource "azapi_update_resource" "update_solution_storage" {
   type        = "Microsoft.Migrate/migrateprojects/solutions@2020-05-01"
   resource_id = data.azapi_resource.replication_solution[0].id
 
-  body = jsonencode({
+  body = {
     properties = {
       details = {
         extendedDetails = merge(
@@ -230,7 +206,7 @@ resource "azapi_update_resource" "update_solution_storage" {
         )
       }
     }
-  })
+  }
 
   depends_on = [
     azurerm_role_assignment.vault_storage_contributor,
@@ -248,7 +224,7 @@ resource "azapi_resource" "replication_extension" {
 
   schema_validation_enabled = false
 
-  body = jsonencode({
+  body = {
     properties = {
       customProperties = var.instance_type == "VMwareToAzStackHCI" ? {
         azStackHciFabricArmId       = var.target_fabric_id
@@ -264,7 +240,7 @@ resource "azapi_resource" "replication_extension" {
         hyperVFabricArmId           = var.source_fabric_id
       }
     }
-  })
+  }
 
   depends_on = [
     azapi_resource.replication_policy,
@@ -294,9 +270,9 @@ resource "azapi_resource" "protected_item" {
 
   schema_validation_enabled = false
 
-  body = jsonencode({
+  body = {
     properties = {
-      policyName              = var.policy_name
+      policyName               = var.policy_name
       replicationExtensionName = var.replication_extension_name
       customProperties = {
         instanceType                     = var.instance_type
@@ -305,35 +281,35 @@ resource "azapi_resource" "protected_item" {
         fabricDiscoveryMachineId         = var.machine_id
         disksToInclude = [
           for disk in var.disks_to_include : {
-            diskId                  = disk.disk_id
-            diskSizeGB              = disk.disk_size_gb
-            diskFileFormat          = disk.disk_file_format
-            isOsDisk                = disk.is_os_disk
-            isDynamic               = disk.is_dynamic
-            diskPhysicalSectorSize  = 512
+            diskId                 = disk.disk_id
+            diskSizeGB             = disk.disk_size_gb
+            diskFileFormat         = disk.disk_file_format
+            isOsDisk               = disk.is_os_disk
+            isDynamic              = disk.is_dynamic
+            diskPhysicalSectorSize = 512
           }
         ]
-        targetVmName          = var.target_vm_name
-        targetResourceGroupId = var.target_resource_group_id
-        storageContainerId    = var.target_storage_path_id
-        hyperVGeneration      = var.hyperv_generation
-        targetCpuCores        = var.target_vm_cpu_cores
-        sourceCpuCores        = var.source_vm_cpu_cores
-        isDynamicRam          = var.is_dynamic_memory_enabled
-        sourceMemoryInMegaBytes = var.source_vm_ram_mb
-        targetMemoryInMegaBytes = var.target_vm_ram_mb
+        targetVmName              = var.target_vm_name
+        targetResourceGroupId     = var.target_resource_group_id
+        storageContainerId        = var.target_storage_path_id
+        hyperVGeneration          = var.hyperv_generation
+        targetCpuCores            = var.target_vm_cpu_cores
+        sourceCpuCores            = var.source_vm_cpu_cores
+        isDynamicRam              = var.is_dynamic_memory_enabled
+        sourceMemoryInMegaBytes   = var.source_vm_ram_mb
+        targetMemoryInMegaBytes   = var.target_vm_ram_mb
         nicsToInclude = [
           for nic in var.nics_to_include : {
-            nicId                   = nic.nic_id
+            nicId                    = nic.nic_id
             selectionTypeForFailover = nic.selection_type
-            targetNetworkId         = nic.target_network_id
-            testNetworkId           = nic.test_network_id
+            targetNetworkId          = nic.target_network_id
+            testNetworkId            = nic.test_network_id
           }
         ]
         dynamicMemoryConfig = {
-          maximumMemoryInMegaBytes      = 1048576
-          minimumMemoryInMegaBytes      = 512
-          targetMemoryBufferPercentage  = 20
+          maximumMemoryInMegaBytes     = 1048576
+          minimumMemoryInMegaBytes     = 512
+          targetMemoryBufferPercentage = 20
         }
         sourceFabricAgentName = var.source_fabric_agent_name
         targetFabricAgentName = var.target_fabric_agent_name
@@ -341,7 +317,7 @@ resource "azapi_resource" "protected_item" {
         targetHCIClusterId    = var.target_hci_cluster_id
       }
     }
-  })
+  }
 
   timeouts {
     create = "120m"

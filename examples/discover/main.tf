@@ -1,89 +1,66 @@
-# --------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for license information.
-# --------------------------------------------------------------------------------------------
-#
-# Example: Discover Servers from VMware/HyperV
-# This example demonstrates how to use the module to discover servers
-#
-
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.9"
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = ">= 3.71, < 5.0"
+      version = "~> 4.0"
     }
     azapi = {
       source  = "azure/azapi"
-      version = ">= 1.9, < 3.0"
+      version = "~> 2.4"
     }
   }
 }
 
 provider "azurerm" {
   features {}
+  subscription_id = "f6f66a94-f184-45da-ac12-ffbfd8a6eb29"
 }
 
-# Discover all servers in a VMware site
-module "discover_vmware_servers" {
-  source = "../../"
+provider "azapi" {
+  subscription_id = "f6f66a94-f184-45da-ac12-ffbfd8a6eb29"
+}
+
+# Test Discovery
+module "discover_vms" {
+  source = "../.."  # Points to the root module directory
+
+  # Required variables
+  name                 = "migrate-discover"
+  location             = "eastus"  # Change to your region
+  resource_group_name  = "saifaldinali-vmw-ga-bb-rg"
+  instance_type        = "VMwareToAzStackHCI"  # or "HyperVToAzStackHCI"
 
   # Operation mode
   operation_mode = "discover"
 
-  # Resource configuration
-  resource_group_name = "rg-migrate-prod"
-  location            = "eastus"
-  name                = "vmware-discovery"
+  # Discovery Configuration
+  project_name = "saifaldinali-vmw-ga-bb"
 
-  # Discovery configuration
-  project_name        = "contoso-migrate-project"
-  source_machine_type = "VMware"
-  appliance_name      = "contoso-vmware-appliance"
+  # Optional: Specify appliance for targeted discovery
+  # appliance_name      = "your-appliance-name"
+  # source_machine_type = "VMware"  # or "HyperV"
 
   # Optional: Filter by display name
   # display_name = "web-server-01"
 
+  # Tags
   tags = {
-    Environment = "Production"
-    Purpose     = "Migration Discovery"
-    Owner       = "IT Team"
+    Environment = "Test"
+    Purpose     = "Discovery"
   }
 }
 
 # Output discovered servers
 output "discovered_servers" {
-  value       = module.discover_vmware_servers.discovered_servers
-  description = "List of discovered servers with their properties"
+  value = module.discover_vms.discovered_servers
 }
 
-output "total_servers_found" {
-  value       = module.discover_vmware_servers.discovered_servers_count
-  description = "Total number of servers discovered"
+output "discovered_servers_count" {
+  value = module.discover_vms.discovered_servers_count
 }
 
-# Example: Process discovered servers
-locals {
-  # Filter servers by OS
-  windows_servers = [
-    for server in module.discover_vmware_servers.discovered_servers :
-    server if can(regex("Windows", server.os_name))
-  ]
-
-  linux_servers = [
-    for server in module.discover_vmware_servers.discovered_servers :
-    server if can(regex("Linux|Ubuntu|CentOS|RedHat", server.os_name))
-  ]
+# Debug output to see raw API response
+output "debug_raw_output" {
+  value = module.discover_vms.debug_raw_discovered_servers
 }
-
-output "windows_servers_count" {
-  value       = length(local.windows_servers)
-  description = "Number of Windows servers discovered"
-}
-
-output "linux_servers_count" {
-  value       = length(local.linux_servers)
-  description = "Number of Linux servers discovered"
-}
-
