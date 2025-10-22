@@ -59,8 +59,3 @@ output "discovered_servers" {
 output "discovered_servers_count" {
   value = module.discover_vms.discovered_servers_count
 }
-
-# Debug output to see raw API response
-output "debug_raw_output" {
-  value = module.discover_vms.debug_raw_discovered_servers
-}

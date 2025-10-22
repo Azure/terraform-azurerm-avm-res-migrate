@@ -8,29 +8,54 @@
 # ========================================
 
 output "discovered_servers" {
-  description = "List of discovered servers from Azure Migrate"
+  description = "List of discovered servers from Azure Migrate (filtered: index, machine_name, ip_addresses, operating_system, boot_type, os_disk_id)"
   value = local.is_discover_mode && length(data.azapi_resource_list.discovered_servers) > 0 ? [
-    for server in try(jsondecode(data.azapi_resource_list.discovered_servers[0].output).value, []) :
-    length(server.properties.discoveryData) > 0 ? {
-      machine_name     = try(server.properties.discoveryData[0].fqdn, server.properties.discoveryData[0].machineName, server.name, "N/A")
-      ip_addresses     = try(join(", ", server.properties.discoveryData[0].ipAddresses), "N/A")
+    for idx, server in try(data.azapi_resource_list.discovered_servers[0].output.value, []) : {
+      index            = idx + 1
+      machine_name     = try(server.properties.discoveryData[0].machineName, server.properties.discoveryData[0].fqdn, server.name, "N/A")
+      ip_addresses     = try(length(server.properties.discoveryData[0].ipAddresses) > 0 ? join(", ", server.properties.discoveryData[0].ipAddresses) : "None", "N/A")
       operating_system = try(server.properties.discoveryData[0].osName, "N/A")
       boot_type        = try(server.properties.discoveryData[0].extendedInfo.bootType, "N/A")
       os_disk_id       = try(jsondecode(server.properties.discoveryData[0].extendedInfo.diskDetails)[0].InstanceId, "N/A")
-    } : null
-    if server.properties.discoveryData != null && length(server.properties.discoveryData) > 0
+    } if try(length(server.properties.discoveryData), 0) > 0
   ] : []
 }
 
 output "discovered_servers_count" {
-  description = "Total number of discovered servers"
-  value       = local.is_discover_mode && length(data.azapi_resource_list.discovered_servers) > 0 ? length(try(jsondecode(data.azapi_resource_list.discovered_servers[0].output).value, [])) : 0
+  description = "Total number of discovered servers with discovery data"
+  value = local.is_discover_mode && length(data.azapi_resource_list.discovered_servers) > 0 ? length([
+    for server in try(data.azapi_resource_list.discovered_servers[0].output.value, []) :
+    server if try(length(server.properties.discoveryData), 0) > 0
+  ]) : 0
+}
+
+output "total_machines_count" {
+  description = "Total number of machines (including those without discovery data)"
+  value = local.is_discover_mode && length(data.azapi_resource_list.discovered_servers) > 0 ? length(try(data.azapi_resource_list.discovered_servers[0].output.value, [])) : 0
 }
 
 # Debug output - raw API response
 output "debug_raw_discovered_servers" {
   description = "Raw API response for debugging"
   value       = local.is_discover_mode && length(data.azapi_resource_list.discovered_servers) > 0 ? data.azapi_resource_list.discovered_servers[0].output : null
+}
+
+# Debug output - parsed servers
+output "debug_parsed_servers" {
+  description = "Parsed servers for debugging"
+  value       = local.is_discover_mode && length(data.azapi_resource_list.discovered_servers) > 0 ? try(data.azapi_resource_list.discovered_servers[0].output.value, []) : []
+}
+
+# Debug output - check mode
+output "debug_is_discover_mode" {
+  description = "Is discover mode active"
+  value       = local.is_discover_mode
+}
+
+# Debug output - data source length
+output "debug_data_source_length" {
+  description = "Length of discovered_servers data source"
+  value       = length(data.azapi_resource_list.discovered_servers)
 }
 
 # ========================================
