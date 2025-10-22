@@ -23,6 +23,7 @@ terraform {
 
 provider "azurerm" {
   features {}
+  subscription_id = "f6f66a94-f184-45da-ac12-ffbfd8a6eb29"
 }
 
 # Create replication for a specific VM
@@ -32,18 +33,21 @@ module "replicate_vm" {
   # Operation mode
   operation_mode = "replicate"
 
+  # Azure Migrate Project
+  project_name = "saifaldinali-vmw-ga-bb"
+
   # Resource configuration
-  resource_group_name = "rg-migrate-prod"
+  resource_group_name = "saifaldinali-vmw-ga-bb-rg"
   location            = "eastus"
   name                = "vm-replication"
 
-  # Machine to replicate
-  machine_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-migrate-prod/providers/Microsoft.OffAzure/VMwareSites/vmware-site/machines/web-server-01"
+  # Machine to replicate - GPOTest-PC2 (using GUID as machine name)
+  machine_id = "/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saifaldinali-vmw-ga-bb-rg/providers/Microsoft.Migrate/migrateprojects/saifaldinali-vmw-ga-bb/machines/502337ea-92b2-0431-f9bf-a191c0f58a34"
 
   # Target configuration
-  target_vm_name          = "web-server-01-migrated"
-  target_storage_path_id  = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-hci/providers/Microsoft.AzureStackHCI/storagecontainers/storage-path-01"
-  target_resource_group_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-migrated-vms"
+  target_vm_name           = "MigratedVmAzCLI"
+  target_storage_path_id   = "/subscriptions/304d8fdf-1c02-4907-9c3a-ddbd677199cd/resourceGroups/EDGECI-REGISTRATION-rr1n26r1508-PWxduHTU/providers/Microsoft.AzureStackHCI/storageContainers/UserStorage1-21ad348ce97c47d286143fa0a53dcd86"
+  target_resource_group_id = "/subscriptions/304d8fdf-1c02-4907-9c3a-ddbd677199cd/resourceGroups/saifaldinali-vmx-ga-bb-rg"
 
   # VM sizing
   target_vm_cpu_cores = 4
@@ -52,56 +56,38 @@ module "replicate_vm" {
   hyperv_generation   = "2"
 
   # Replication configuration
-  replication_vault_id      = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-migrate-prod/providers/Microsoft.DataReplication/replicationVaults/vault-name"
-  policy_name               = "vault-nameVMwareToAzStackHCIpolicy"
-  replication_extension_name = "vmware-fabric-hci-fabric-MigReplicationExtn"
+  replication_vault_id      = "/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saifaldinali-vmw-ga-bb-rg/providers/Microsoft.DataReplication/replicationVaults/saifaldinalivmwgabbreplicationvault"
+  policy_name               = "saifaldinalivmwgabbreplicationvaultVMwareToAzStackHCIpolicy"
+  replication_extension_name = "src23b3replicationfabric-tgt28eb7replicationfabric-MigReplicationExtn"
 
   # Fabric and DRA configuration
   source_fabric_agent_name = "vmware-source-dra"
   target_fabric_agent_name = "hci-target-dra"
-  run_as_account_id        = "/subscriptions/.../runAsAccounts/vcenter-account"
+  run_as_account_id        = "/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saifaldinali-vmw-ga-bb-rg/providers/Microsoft.OffAzure/VMwareSites/vmware-site/runAsAccounts/vcenter-account"
 
   # Custom location and HCI cluster
-  custom_location_id  = "/subscriptions/.../customLocations/hci-custom-location"
-  target_hci_cluster_id = "/subscriptions/.../clusters/hci-cluster-01"
+  custom_location_id  = "/subscriptions/304d8fdf-1c02-4907-9c3a-ddbd677199cd/resourceGroups/EDGECI-REGISTRATION-rr1n26r1508-PWxduHTU/providers/Microsoft.ExtendedLocation/customLocations/hci-custom-location"
+  target_hci_cluster_id = "/subscriptions/304d8fdf-1c02-4907-9c3a-ddbd677199cd/resourceGroups/EDGECI-REGISTRATION-rr1n26r1508-PWxduHTU/providers/Microsoft.AzureStackHCI/clusters/hci-cluster-01"
 
-  # Disks to include (power user mode)
-  disks_to_include = [
-    {
-      disk_id          = "disk-001"
-      disk_size_gb     = 127
-      disk_file_format = "VHDX"
-      is_os_disk       = true
-      is_dynamic       = true
-    },
-    {
-      disk_id          = "disk-002"
-      disk_size_gb     = 500
-      disk_file_format = "VHDX"
-      is_os_disk       = false
-      is_dynamic       = true
-    }
-  ]
+  # OS Disk (from GPOTest-PC2 machine)
+  os_disk_id = "6000C29f-7e33-32c7-73bc-5d4136822573"
 
-  # NICs to include
-  nics_to_include = [
-    {
-      nic_id            = "nic-001"
-      target_network_id = "/subscriptions/.../logicalnetworks/hci-network-01"
-      test_network_id   = "/subscriptions/.../logicalnetworks/hci-test-network"
-      selection_type    = "SelectedByUser"
-    }
-  ]
+  # Virtual Switch (Network)
+  target_virtual_switch_id = "/subscriptions/304d8fdf-1c02-4907-9c3a-ddbd677199cd/resourceGroups/EDGECI-REGISTRATION-rr1n26r1508-PWxduHTU/providers/Microsoft.AzureStackHCI/logicalnetworks/n26r1508-lnet"
 
   # Source VM metadata
   source_vm_cpu_cores = 2
   source_vm_ram_mb    = 4096
   instance_type       = "VMwareToAzStackHCI"
 
+  # Appliance names
+  source_appliance_name = "src"
+  target_appliance_name = "tgt2"
+
   tags = {
     Environment = "Production"
     Purpose     = "VM Migration"
-    SourceVM    = "web-server-01"
+    Project     = "saifaldinali-vmw-ga-bb"
   }
 }
 
@@ -119,32 +105,4 @@ output "replication_state" {
 output "target_vm_name" {
   value       = module.replicate_vm.target_vm_name_output
   description = "Name of the target VM"
-}
-
-# Example: Default user mode (simplified configuration)
-module "replicate_vm_simple" {
-  source = "../../"
-
-  operation_mode      = "replicate"
-  resource_group_name = "rg-migrate-prod"
-  location            = "eastus"
-  name                = "simple-vm-replication"
-
-  machine_id          = "/subscriptions/.../machines/app-server-01"
-  target_vm_name      = "app-server-01-migrated"
-  target_storage_path_id  = "/subscriptions/.../storagecontainers/storage-path-01"
-  target_resource_group_id = "/subscriptions/.../resourceGroups/rg-migrated-vms"
-
-  # Use default user mode with single OS disk and virtual switch
-  os_disk_id              = "disk-os-001"
-  target_virtual_switch_id = "/subscriptions/.../logicalnetworks/hci-network-01"
-
-  replication_vault_id       = "/subscriptions/.../replicationVaults/vault-name"
-  policy_name                = "migration-policy"
-  replication_extension_name = "replication-extn"
-
-  tags = {
-    Environment = "Production"
-    MigrationType = "Simple"
-  }
 }

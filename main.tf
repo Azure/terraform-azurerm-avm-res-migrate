@@ -269,19 +269,20 @@ resource "azapi_resource" "replication_extension" {
 # ========================================
 
 # Get discovered machine details (if machine_id provided)
+# Note: This data source is currently not used and disabled to avoid lookup failures
 data "azapi_resource" "discovered_machine" {
-  count = local.is_replicate_mode && var.machine_id != null ? 1 : 0
+  count = 0 # Disabled: local.is_replicate_mode && var.machine_id != null ? 1 : 0
 
-  type        = length(split("/", var.machine_id)) > 10 && contains(split("/", var.machine_id), "HyperVSites") ? "Microsoft.OffAzure/HyperVSites/machines@2023-06-06" : "Microsoft.OffAzure/VMwareSites/machines@2023-06-06"
+  type        = contains(split("/", lower(var.machine_id)), "migrateprojects") ? "Microsoft.Migrate/migrateprojects/machines@2020-05-01" : (contains(split("/", lower(var.machine_id)), "hypervsites") ? "Microsoft.OffAzure/HyperVSites/machines@2023-06-06" : "Microsoft.OffAzure/VMwareSites/machines@2023-06-06")
   resource_id = var.machine_id
 }
 
 # Create protected item (VM replication)
 resource "azapi_resource" "protected_item" {
-  count = local.is_replicate_mode && var.machine_id != null ? 1 : 0
+  count = local.is_replicate_mode && (var.machine_id != null || var.machine_name != null) ? 1 : 0
 
   type      = "Microsoft.DataReplication/replicationVaults/protectedItems@2024-09-01"
-  name      = basename(var.machine_id)
+  name      = var.machine_name != null ? var.machine_name : basename(var.machine_id)
   parent_id = var.replication_vault_id
 
   schema_validation_enabled = false
@@ -294,7 +295,7 @@ resource "azapi_resource" "protected_item" {
         instanceType                     = var.instance_type
         targetArcClusterCustomLocationId = var.custom_location_id
         customLocationRegion             = var.location
-        fabricDiscoveryMachineId         = var.machine_id
+        fabricDiscoveryMachineId         = var.machine_id != null ? var.machine_id : "${data.azapi_resource.migrate_project[0].id}/machines/${var.machine_name}"
         disksToInclude = [
           for disk in var.disks_to_include : {
             diskId                 = disk.disk_id
