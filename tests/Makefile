@@ -1,6 +1,6 @@
 # Makefile for running Terraform tests
 
-.PHONY: help test test-unit test-integration test-discover test-initialize test-replicate test-workflow test-short test-clean deps fmt vet
+.PHONY: help test test-unit test-integration test-discover test-initialize test-replicate test-jobs test-remove test-workflow test-short test-clean deps fmt vet
 
 # Default target
 help:
@@ -17,6 +17,8 @@ help:
 	@echo "  make test-discover     - Run discover integration tests"
 	@echo "  make test-initialize   - Run initialize integration tests"
 	@echo "  make test-replicate    - Run replicate integration tests"
+	@echo "  make test-jobs         - Run jobs integration tests"
+	@echo "  make test-remove       - Run remove integration tests (DELETES resources!)"
 	@echo "  make test-workflow     - Run end-to-end workflow tests"
 	@echo ""
 	@echo "All Tests:"
@@ -38,7 +40,7 @@ test-unit: deps
 	@echo "Running UNIT tests (mock values, no Azure resources)"
 	@echo "Duration: 1-5 minutes | Cost: FREE"
 	@echo "=========================================="
-	go test -v -timeout 5m -run "^TestModule|^TestDiscover.*Configuration|^TestInitialize.*Configuration|^TestReplicate.*Configuration|^TestVariable|^TestResource|^TestDisk|^TestNetwork"
+	go test -v -timeout 5m -run "^TestModule|^TestDiscover.*Configuration|^TestInitialize.*Configuration|^TestReplicate.*Configuration|^TestJobs.*Configuration|^TestRemove.*Configuration|^TestOperation.*Validation|^TestVariable|^TestResource|^TestDisk|^TestNetwork"
 
 # Run ALL INTEGRATION tests (slow, creates real Azure resources)
 test-integration: deps
@@ -48,7 +50,7 @@ test-integration: deps
 	@echo "Duration: 30-60 minutes | Cost: $$$"
 	@echo "=========================================="
 	@sleep 3
-	go test -v -timeout 60m -run "^TestDiscover|^TestInitialize|^TestReplicate|^TestIntegration"
+	go test -v -timeout 60m -run "^TestDiscover|^TestInitialize|^TestReplicate|^TestJobs|^TestRemove|^TestIntegration"
 
 # Run all tests (unit + integration)
 test: test-unit test-integration
@@ -67,6 +69,21 @@ test-initialize: deps
 test-replicate: deps
 	@echo "Running replicate integration tests (creates Azure resources)..."
 	go test -v -timeout 30m -run "^TestReplicateCommand"
+
+# Run jobs integration tests
+test-jobs: deps
+	@echo "Running jobs integration tests (queries Azure resources)..."
+	go test -v -timeout 20m -run "^TestJobs"
+
+# Run remove integration tests
+test-remove: deps
+	@echo "=========================================="
+	@echo "WARNING: Running REMOVE integration tests"
+	@echo "This will DELETE REAL Azure protected items!"
+	@echo "Duration: 20 minutes | Risk: DELETES RESOURCES"
+	@echo "=========================================="
+	@sleep 5
+	go test -v -timeout 20m -run "^TestRemove"
 
 # Run end-to-end workflow integration tests
 test-workflow: deps

@@ -137,11 +137,22 @@ go test -v -timeout 5m -run TestModuleValidation
 go test -v -timeout 5m -run TestDiscoverModeConfiguration
 go test -v -timeout 5m -run TestInitializeModeConfiguration
 go test -v -timeout 5m -run TestReplicateModeConfiguration
+go test -v -timeout 5m -run TestJobsModeConfiguration
+go test -v -timeout 5m -run TestRemoveModeConfiguration
+go test -v -timeout 5m -run TestOperationModeValidation
 
 # Integration tests - Creates Azure resources
 go test -v -timeout 30m -run TestDiscoverCommand
 go test -v -timeout 30m -run TestInitializeCommand
 go test -v -timeout 30m -run TestReplicateCommand
+go test -v -timeout 30m -run TestJobsListAll
+go test -v -timeout 30m -run TestJobsGetSpecific
+go test -v -timeout 30m -run TestRemoveReplicationNormal
+
+# WARNING: Remove tests delete protected items!
+go test -v -timeout 30m -run TestRemoveReplicationForce
+
+# Full workflow tests
 go test -v -timeout 60m -run TestIntegrationWorkflow
 ```
 
@@ -165,16 +176,21 @@ go test -v -timeout 60m -parallel 2 -run TestDiscover
 - ✅ `TestDiscoverModeConfiguration` - Discover mode config with mock values
 - ✅ `TestInitializeModeConfiguration` - Initialize mode config with mock values
 - ✅ `TestReplicateModeConfiguration` - Replicate mode config with mock values
+- ✅ `TestJobsModeConfiguration` - Jobs mode config with mock values
+- ✅ `TestRemoveModeConfiguration` - Remove mode config with mock values
 - ✅ `TestVariableValidation` - Variable constraints and validation rules
 - ✅ `TestResourceNaming` - Resource naming pattern validation
 - ✅ `TestDiskConfiguration` - Disk configuration logic
 - ✅ `TestNetworkConfiguration` - Network configuration logic
+- ✅ `TestOperationModeValidation` - All operation modes validation
 
 These tests use **mock values** like:
 - `"mock-rg"` - Resource group names
 - `"mock-project"` - Project names
 - `"00000000-0000-0000-0000-000000000000"` - Mock GUIDs
 - `"mock-vault"` - Vault names
+- `"mock-job-123"` - Job names
+- `"/subscriptions/.../protectedItems/mock-item"` - Protected item IDs
 - Validate configuration structure without Azure API calls
 
 ### Discover Tests (`discover_test.go`)
@@ -233,6 +249,66 @@ These tests use **mock values** like:
   - VM sizing (CPU, RAM)
   - Hyper-V generation settings
   - Instance type configurations
+
+### Jobs Tests (`jobs_test.go`)
+
+**Integration tests that create real Azure resources:**
+
+- ✅ `TestJobsListAll` - List all replication jobs in vault
+- ✅ `TestJobsGetSpecific` - Retrieve specific job by name
+- ✅ `TestJobsOutputStructure` - Validate output structure
+- ✅ `TestJobsWithProjectName` - Job retrieval using project name
+- ✅ `TestJobsWithVaultID` - Job retrieval using explicit vault ID
+- ✅ `TestJobsErrorHandling` - Error cases (invalid job name)
+- Tests verify:
+  - Job list retrieval from vault
+  - Specific job details retrieval
+  - Job output structure (name, state, vm_name, errors, tasks)
+  - Vault resolution from project name
+  - Job tracking for migration operations
+
+**Required Environment Variables for Jobs Tests:**
+```bash
+export ARM_SUBSCRIPTION_ID="..."
+export ARM_RESOURCE_GROUP="..."
+export ARM_PROJECT_NAME="..."          # For project-based vault lookup
+export ARM_VAULT_ID="..."              # For explicit vault ID tests
+export ARM_JOB_NAME="..."              # For specific job retrieval
+```
+
+### Remove Tests (`remove_test.go`)
+
+**Integration tests that create real Azure resources (and DESTROY them):**
+
+⚠️ **WARNING**: These tests **DELETE** protected items. Use with caution!
+
+- ✅ `TestRemoveReplicationNormal` - Normal replication removal
+- ✅ `TestRemoveReplicationForce` - Force replication removal
+- ✅ `TestRemoveOutputStructure` - Validate output structure
+- ✅ `TestRemoveValidation` - Protected item validation before removal
+- ✅ `TestRemoveErrorHandling` - Error cases (invalid item ID)
+- ✅ `TestRemoveWithJobTracking` - Removal with job tracking
+- ✅ `TestRemoveProtectedItemValidation` - DisableProtection check
+- ✅ `TestRemoveIdempotency` - Removal idempotency behavior
+- Tests verify:
+  - Protected item deletion
+  - Force delete option
+  - Pre-removal validation (protection state, allowed jobs)
+  - Operation headers for job tracking
+  - Error handling for non-existent items
+  - Removal job initiation
+
+**Required Environment Variables for Remove Tests:**
+```bash
+export ARM_SUBSCRIPTION_ID="..."
+export ARM_RESOURCE_GROUP="..."
+export ARM_PROTECTED_ITEM_ID="..."         # Item to remove (normal)
+export ARM_PROTECTED_ITEM_ID_FORCE="..."   # Item to force remove
+export ARM_PROTECTED_ITEM_ID_IDEMPOTENT="..." # Item for idempotency test
+export ARM_PROJECT_NAME="..."              # For job tracking tests
+```
+
+⚠️ **IMPORTANT**: Remove tests will **permanently delete** protected items. Ensure you're using test resources that can be safely removed.
 
 ### Integration Tests (`integration_test.go`)
 

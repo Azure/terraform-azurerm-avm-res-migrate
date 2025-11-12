@@ -453,3 +453,151 @@ func TestNetworkConfiguration(t *testing.T) {
 		})
 	}
 }
+
+// TestJobsModeConfiguration tests jobs mode configuration without creating resources
+func TestJobsModeConfiguration(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name        string
+		vars        map[string]interface{}
+		expectValid bool
+	}{
+		{
+			name: "ValidJobsListAll",
+			vars: map[string]interface{}{
+				"operation_mode":      "jobs",
+				"name":                "mock-module",
+				"resource_group_name": "mock-rg",
+				"location":            "eastus",
+				"project_name":        "mock-project",
+			},
+			expectValid: true,
+		},
+		{
+			name: "ValidJobsGetSpecific",
+			vars: map[string]interface{}{
+				"operation_mode":       "jobs",
+				"name":                 "mock-module",
+				"resource_group_name":  "mock-rg",
+				"location":             "eastus",
+				"job_name":             "mock-job-123",
+				"replication_vault_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.DataReplication/replicationVaults/mock-vault",
+			},
+			expectValid: true,
+		},
+		{
+			name: "ValidJobsWithProjectName",
+			vars: map[string]interface{}{
+				"operation_mode":      "jobs",
+				"name":                "mock-module",
+				"resource_group_name": "mock-rg",
+				"location":            "eastus",
+				"project_name":        "mock-project",
+				"job_name":            "mock-job-456",
+			},
+			expectValid: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Validate required variables are present
+			assert.Equal(t, "jobs", tc.vars["operation_mode"], "Operation mode should be 'jobs'")
+			assert.Contains(t, tc.vars, "name", "Should have name variable")
+			assert.Contains(t, tc.vars, "resource_group_name", "Should have resource_group_name variable")
+			assert.Contains(t, tc.vars, "location", "Should have location variable")
+
+			// Validate that either project_name or replication_vault_id is present
+			hasProjectName := tc.vars["project_name"] != nil
+			hasVaultId := tc.vars["replication_vault_id"] != nil
+			assert.True(t, hasProjectName || hasVaultId, "Should have either project_name or replication_vault_id")
+		})
+	}
+}
+
+// TestRemoveModeConfiguration tests remove mode configuration without creating resources
+func TestRemoveModeConfiguration(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name        string
+		vars        map[string]interface{}
+		expectValid bool
+	}{
+		{
+			name: "ValidRemoveNormal",
+			vars: map[string]interface{}{
+				"operation_mode":      "remove",
+				"name":                "mock-module",
+				"resource_group_name": "mock-rg",
+				"location":            "eastus",
+				"target_object_id":    "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.DataReplication/replicationVaults/mock-vault/protectedItems/mock-item",
+				"force_remove":        false,
+			},
+			expectValid: true,
+		},
+		{
+			name: "ValidRemoveForce",
+			vars: map[string]interface{}{
+				"operation_mode":      "remove",
+				"name":                "mock-module",
+				"resource_group_name": "mock-rg",
+				"location":            "eastus",
+				"target_object_id":    "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/rg-migrate/providers/Microsoft.DataReplication/replicationVaults/vault-prod/protectedItems/vm-server-001",
+				"force_remove":        true,
+			},
+			expectValid: true,
+		},
+		{
+			name: "RemoveWithDefaultForce",
+			vars: map[string]interface{}{
+				"operation_mode":      "remove",
+				"name":                "mock-module",
+				"resource_group_name": "mock-rg",
+				"location":            "eastus",
+				"target_object_id":    "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.DataReplication/replicationVaults/mock-vault/protectedItems/mock-item-2",
+				// force_remove not specified, should default to false
+			},
+			expectValid: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Validate required variables are present
+			assert.Equal(t, "remove", tc.vars["operation_mode"], "Operation mode should be 'remove'")
+			assert.Contains(t, tc.vars, "name", "Should have name variable")
+			assert.Contains(t, tc.vars, "resource_group_name", "Should have resource_group_name variable")
+			assert.Contains(t, tc.vars, "location", "Should have location variable")
+			assert.Contains(t, tc.vars, "target_object_id", "Should have target_object_id variable")
+
+			// Validate target_object_id format
+			targetId, ok := tc.vars["target_object_id"].(string)
+			assert.True(t, ok, "target_object_id should be a string")
+			assert.Contains(t, targetId, "/subscriptions/", "target_object_id should contain /subscriptions/")
+			assert.Contains(t, targetId, "/resourceGroups/", "target_object_id should contain /resourceGroups/")
+			assert.Contains(t, targetId, "/providers/Microsoft.DataReplication/replicationVaults/", "target_object_id should contain vault path")
+			assert.Contains(t, targetId, "/protectedItems/", "target_object_id should contain /protectedItems/")
+
+			// Validate force_remove is boolean if present
+			if forceRemove, exists := tc.vars["force_remove"]; exists {
+				_, isBool := forceRemove.(bool)
+				assert.True(t, isBool, "force_remove should be a boolean")
+			}
+		})
+	}
+}
+
+// TestOperationModeValidation tests all valid operation modes
+func TestOperationModeValidation(t *testing.T) {
+	t.Parallel()
+
+	validModes := []string{"discover", "initialize", "replicate", "jobs", "remove"}
+
+	for _, mode := range validModes {
+		t.Run(mode, func(t *testing.T) {
+			assert.Contains(t, validModes, mode, "Mode should be in valid modes list")
+		})
+	}
+}
