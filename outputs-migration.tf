@@ -164,3 +164,61 @@ output "migrate_project_id" {
   description = "Azure Migrate project ID"
   value       = length(data.azapi_resource.migrate_project) > 0 ? data.azapi_resource.migrate_project[0].id : null
 }
+
+# ========================================
+# JOBS COMMAND OUTPUTS
+# ========================================
+
+output "replication_job" {
+  description = "Detailed information for a specific replication job"
+  value = local.is_jobs_mode && var.job_name != null && length(data.azapi_resource.replication_job) > 0 ? {
+    job_name     = try(data.azapi_resource.replication_job[0].output.name, "N/A")
+    display_name = try(data.azapi_resource.replication_job[0].output.properties.displayName, "N/A")
+    state        = try(data.azapi_resource.replication_job[0].output.properties.state, "N/A")
+    vm_name      = try(data.azapi_resource.replication_job[0].output.properties.objectInternalName, "N/A")
+    start_time   = try(data.azapi_resource.replication_job[0].output.properties.startTime, "N/A")
+    end_time     = try(data.azapi_resource.replication_job[0].output.properties.endTime, null)
+    errors = try([
+      for error in data.azapi_resource.replication_job[0].output.properties.errors : {
+        message        = try(error.message, "N/A")
+        code           = try(error.code, "N/A")
+        recommendation = try(error.recommendation, null)
+      }
+    ], [])
+    tasks = try([
+      for task in data.azapi_resource.replication_job[0].output.properties.tasks : {
+        name       = try(task.taskName, "N/A")
+        state      = try(task.state, "N/A")
+        start_time = try(task.startTime, null)
+        end_time   = try(task.endTime, null)
+      }
+    ], [])
+  } : null
+}
+
+output "replication_jobs" {
+  description = "Summary of all replication jobs in the vault"
+  value = local.is_jobs_mode && var.job_name == null && length(data.azapi_resource_list.replication_jobs) > 0 ? [
+    for job in try(data.azapi_resource_list.replication_jobs[0].output.value, []) : {
+      job_name     = try(job.name, "N/A")
+      display_name = try(job.properties.displayName, "N/A")
+      state        = try(job.properties.state, "N/A")
+      vm_name      = try(job.properties.objectInternalName, "N/A")
+      start_time   = try(job.properties.startTime, "N/A")
+      end_time     = try(job.properties.endTime, null)
+      has_errors   = try(length(job.properties.errors) > 0, false)
+    }
+  ] : []
+}
+
+output "replication_jobs_count" {
+  description = "Total number of replication jobs in the vault"
+  value = local.is_jobs_mode && var.job_name == null && length(data.azapi_resource_list.replication_jobs) > 0 ? length(
+    try(data.azapi_resource_list.replication_jobs[0].output.value, [])
+  ) : 0
+}
+
+output "vault_id_for_jobs" {
+  description = "Replication vault ID used for job queries"
+  value       = local.is_jobs_mode && length(data.azapi_resource.vault_for_jobs) > 0 ? data.azapi_resource.vault_for_jobs[0].id : null
+}

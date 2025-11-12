@@ -177,12 +177,12 @@ variable "tags" {
 # Operation Mode
 variable "operation_mode" {
   type        = string
-  description = "The migration operation to perform: discover, initialize, or replicate"
+  description = "The migration operation to perform: discover, initialize, replicate, or jobs"
   default     = "discover"
 
   validation {
-    condition     = contains(["discover", "initialize", "replicate"], var.operation_mode)
-    error_message = "operation_mode must be one of: discover, initialize, replicate."
+    condition     = contains(["discover", "initialize", "replicate", "jobs"], var.operation_mode)
+    error_message = "operation_mode must be one of: discover, initialize, replicate, jobs."
   }
 }
 
@@ -455,5 +455,12 @@ variable "run_as_account_id" {
 variable "target_hci_cluster_id" {
   type        = string
   description = "Target HCI cluster ARM ID"
+  default     = null
+}
+
+# COMMAND 4: GET REPLICATION JOBS Variables
+variable "job_name" {
+  type        = string
+  description = "Specific job name to retrieve. If not provided, all jobs will be listed."
   default     = null
 }

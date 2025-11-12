@@ -8,6 +8,7 @@
 # 1. get_discovered_server - Retrieve discovered servers
 # 2. initialize_replication_infrastructure - Setup replication infrastructure
 # 3. new_local_server_replication - Create VM replication
+# 4. get_local_replication_job - Retrieve replication job status
 #
 
 # ========================================
@@ -19,6 +20,7 @@ locals {
   is_discover_mode   = var.operation_mode == "discover"
   is_initialize_mode = var.operation_mode == "initialize"
   is_replicate_mode  = var.operation_mode == "replicate"
+  is_jobs_mode       = var.operation_mode == "jobs"
 
   # Resource group reference
   resource_group_name = var.resource_group_name
@@ -340,6 +342,35 @@ resource "azapi_resource" "protected_item" {
     create = "120m"
     update = "120m"
   }
+}
+
+# ========================================
+# COMMAND 4: GET REPLICATION JOBS
+# ========================================
+
+# Get vault from solution (for jobs mode)
+data "azapi_resource" "vault_for_jobs" {
+  count = local.is_jobs_mode ? 1 : 0
+
+  type        = "Microsoft.DataReplication/replicationVaults@2024-09-01"
+  resource_id = try(data.azapi_resource.replication_solution[0].output.properties.details.extendedDetails.vaultId, var.replication_vault_id)
+}
+
+# Get a specific job by name
+data "azapi_resource" "replication_job" {
+  count = local.is_jobs_mode && var.job_name != null ? 1 : 0
+
+  type      = "Microsoft.DataReplication/replicationVaults/jobs@2024-09-01"
+  name      = var.job_name
+  parent_id = var.replication_vault_id != null ? var.replication_vault_id : data.azapi_resource.vault_for_jobs[0].id
+}
+
+# List all jobs in the vault
+data "azapi_resource_list" "replication_jobs" {
+  count = local.is_jobs_mode && var.job_name == null ? 1 : 0
+
+  type      = "Microsoft.DataReplication/replicationVaults/jobs@2024-09-01"
+  parent_id = var.replication_vault_id != null ? var.replication_vault_id : data.azapi_resource.vault_for_jobs[0].id
 }
 
 # ========================================
