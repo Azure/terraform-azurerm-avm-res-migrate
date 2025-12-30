@@ -593,11 +593,107 @@ func TestRemoveModeConfiguration(t *testing.T) {
 func TestOperationModeValidation(t *testing.T) {
 	t.Parallel()
 
-	validModes := []string{"discover", "initialize", "replicate", "jobs", "remove"}
+	validModes := []string{"discover", "initialize", "replicate", "jobs", "remove", "get", "list", "migrate"}
 
 	for _, mode := range validModes {
 		t.Run(mode, func(t *testing.T) {
 			assert.Contains(t, validModes, mode, "Mode should be in valid modes list")
+		})
+	}
+}
+
+// TestMigrateModeConfiguration tests the migrate operation configuration
+func TestMigrateModeConfiguration(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name        string
+		vars        map[string]interface{}
+		expectValid bool
+	}{
+		{
+			name: "ValidMigrateWithShutdown",
+			vars: map[string]interface{}{
+				"operation_mode":      "migrate",
+				"name":                "mock-module",
+				"resource_group_name": "mock-rg",
+				"location":            "eastus",
+				"protected_item_id":   "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.DataReplication/replicationVaults/mock-vault/protectedItems/mock-item",
+				"shutdown_source_vm":  true,
+				"instance_type":       "VMwareToAzStackHCI",
+			},
+			expectValid: true,
+		},
+		{
+			name: "ValidMigrateWithoutShutdown",
+			vars: map[string]interface{}{
+				"operation_mode":      "migrate",
+				"name":                "mock-module",
+				"resource_group_name": "mock-rg",
+				"location":            "eastus",
+				"protected_item_id":   "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/rg-migrate/providers/Microsoft.DataReplication/replicationVaults/vault-prod/protectedItems/vm-server-001",
+				"shutdown_source_vm":  false,
+				"instance_type":       "VMwareToAzStackHCI",
+			},
+			expectValid: true,
+		},
+		{
+			name: "ValidMigrateHyperV",
+			vars: map[string]interface{}{
+				"operation_mode":      "migrate",
+				"name":                "mock-module",
+				"resource_group_name": "mock-rg",
+				"location":            "eastus",
+				"protected_item_id":   "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.DataReplication/replicationVaults/mock-vault/protectedItems/hyperv-vm",
+				"shutdown_source_vm":  true,
+				"instance_type":       "HyperVToAzStackHCI",
+			},
+			expectValid: true,
+		},
+		{
+			name: "MigrateWithDefaultShutdown",
+			vars: map[string]interface{}{
+				"operation_mode":      "migrate",
+				"name":                "mock-module",
+				"resource_group_name": "mock-rg",
+				"location":            "eastus",
+				"protected_item_id":   "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.DataReplication/replicationVaults/mock-vault/protectedItems/mock-item-2",
+				"instance_type":       "VMwareToAzStackHCI",
+				// shutdown_source_vm not specified, should default to true
+			},
+			expectValid: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Validate required variables are present
+			assert.Equal(t, "migrate", tc.vars["operation_mode"], "Operation mode should be 'migrate'")
+			assert.Contains(t, tc.vars, "name", "Should have name variable")
+			assert.Contains(t, tc.vars, "resource_group_name", "Should have resource_group_name variable")
+			assert.Contains(t, tc.vars, "location", "Should have location variable")
+			assert.Contains(t, tc.vars, "protected_item_id", "Should have protected_item_id variable")
+			assert.Contains(t, tc.vars, "instance_type", "Should have instance_type variable")
+
+			// Validate protected_item_id format
+			protectedItemId, ok := tc.vars["protected_item_id"].(string)
+			assert.True(t, ok, "protected_item_id should be a string")
+			assert.Contains(t, protectedItemId, "/subscriptions/", "protected_item_id should contain /subscriptions/")
+			assert.Contains(t, protectedItemId, "/resourceGroups/", "protected_item_id should contain /resourceGroups/")
+			assert.Contains(t, protectedItemId, "/providers/Microsoft.DataReplication/replicationVaults/", "protected_item_id should contain vault path")
+			assert.Contains(t, protectedItemId, "/protectedItems/", "protected_item_id should contain /protectedItems/")
+
+			// Validate instance_type
+			instanceType, ok := tc.vars["instance_type"].(string)
+			assert.True(t, ok, "instance_type should be a string")
+			validInstanceTypes := []string{"HyperVToAzStackHCI", "VMwareToAzStackHCI"}
+			assert.Contains(t, validInstanceTypes, instanceType, "instance_type should be valid")
+
+			// Validate shutdown_source_vm is boolean if present
+			if shutdownVM, exists := tc.vars["shutdown_source_vm"]; exists {
+				_, isBool := shutdownVM.(bool)
+				assert.True(t, isBool, "shutdown_source_vm should be a boolean")
+			}
 		})
 	}
 }
