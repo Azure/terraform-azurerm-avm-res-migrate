@@ -1,93 +1,46 @@
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
+#
+# Example: List Protected Items
+# This example demonstrates how to list all protected (replicating) VMs in a vault
+#
+
 terraform {
-  required_version = ">= 1.9"
+  required_version = ">= 1.5"
 
   required_providers {
     azapi = {
       source  = "azure/azapi"
-      version = "~> 2.4"
+      version = ">= 1.9, < 3.0"
     }
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.0"
+      version = ">= 3.71, < 5.0"
     }
   }
 }
 
 provider "azurerm" {
   features {}
-  subscription_id = "f6f66a94-f184-45da-ac12-ffbfd8a6eb29"
+  subscription_id = var.subscription_id
 }
 
-provider "azapi" {
-  subscription_id = "f6f66a94-f184-45da-ac12-ffbfd8a6eb29"
+# List all protected items in the vault
+module "list_protected_items" {
+  source = "../../"
+
+  location            = var.location
+  name                = "list-protected-items"
+  resource_group_name = var.resource_group_name
+  instance_type       = var.instance_type
+  operation_mode      = "list"
+
+  # List by project name (vault auto-discovered) or by explicit vault ID
+  project_name         = var.project_name
+  replication_vault_id = var.replication_vault_id
+
+  tags = var.tags
 }
-
-# ========================================
-# Example 1: List All Protected Items by Project
-# ========================================
-
-module "list_by_project" {
-  source = "../.."
-
-  location = "eastus"
-  # Required variables
-  name                = "migrate-list"
-  resource_group_name = "saifaldinali-vmw-ga-bb-rg"
-  instance_type       = "VMwareToAzStackHCI"
-  # Operation mode
-  operation_mode = "list"
-  # List by project name (vault will be auto-discovered)
-  project_name = "saifaldinali-vmw-ga-bb"
-  # Tags
-  tags = {
-    Environment = "Test"
-    Purpose     = "ListProtectedItems"
-  }
-}
-
-# ========================================
-# Example 2: List Protected Items by Vault ID
-# ========================================
-
-module "list_by_vault" {
-  source = "../.."
-
-  location = "eastus"
-  # Required variables
-  name                = "migrate-list-vault"
-  resource_group_name = "saifaldinali-vmw-ga-bb-rg"
-  instance_type       = "VMwareToAzStackHCI"
-  # Operation mode
-  operation_mode = "list"
-  # List by explicit vault ID
-  replication_vault_id = "/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saifaldinali-vmw-ga-bb-rg/providers/Microsoft.DataReplication/replicationVaults/saifaldinaliVMWGABBreplicationvault"
-  # Tags
-  tags = {
-    Environment = "Test"
-    Purpose     = "ListProtectedItems"
-  }
-}
-
-# ========================================
-# OUTPUTS - Example 1
-# ========================================
-
-
-
-
-
-
-# ========================================
-# OUTPUTS - Example 2
-# ========================================
-
-
-
-# ========================================
-# DERIVED OUTPUTS - Useful Statistics
-# ========================================
-
-
-
-
 

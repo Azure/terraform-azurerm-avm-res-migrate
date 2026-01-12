@@ -192,10 +192,10 @@ output "protected_item_custom_properties" {
   description = "Custom properties including fabric-specific details, disk configuration, and network settings"
   value = local.is_get_mode ? (
     var.protected_item_id != null && length(data.azapi_resource.protected_item_by_id) > 0 ?
-    try(data.azapi_resource.protected_item_by_id[0].output.properties.customProperties, {}) :
+    try(data.azapi_resource.protected_item_by_id[0].output.properties.customProperties, null) :
     (var.protected_item_name != null && length(data.azapi_resource.protected_item_by_name) > 0 ?
-    try(data.azapi_resource.protected_item_by_name[0].output.properties.customProperties, {}) : {})
-  ) : {}
+    try(data.azapi_resource.protected_item_by_name[0].output.properties.customProperties, null) : null)
+  ) : null
 }
 
 output "protected_item_details" {
@@ -247,7 +247,7 @@ output "protected_item_summary" {
       last_test_failover_status    = try(data.azapi_resource.protected_item_by_id[0].output.properties.lastTestFailoverStatus, "N/A")
       last_planned_failover_time   = try(data.azapi_resource.protected_item_by_id[0].output.properties.lastSuccessfulPlannedFailoverTime, "N/A")
       last_unplanned_failover_time = try(data.azapi_resource.protected_item_by_id[0].output.properties.lastSuccessfulUnplannedFailoverTime, "N/A")
-      source_machine_name          = try(data.azapi_resource.protected_item_by_id[0].output.properties.customProperties.sourceMachineName, "N/A")
+      source_machine_name          = try(data.azapi_resource.protected_item_by_id[0].output.properties.customProperties.sourceVmName, "N/A")
       target_vm_name               = try(data.azapi_resource.protected_item_by_id[0].output.properties.customProperties.targetVmName, "N/A")
       target_resource_group_id     = try(data.azapi_resource.protected_item_by_id[0].output.properties.customProperties.targetResourceGroupId, "N/A")
       instance_type                = try(data.azapi_resource.protected_item_by_id[0].output.properties.customProperties.instanceType, "N/A")
@@ -267,7 +267,7 @@ output "protected_item_summary" {
         last_test_failover_status    = try(data.azapi_resource.protected_item_by_name[0].output.properties.lastTestFailoverStatus, "N/A")
         last_planned_failover_time   = try(data.azapi_resource.protected_item_by_name[0].output.properties.lastSuccessfulPlannedFailoverTime, "N/A")
         last_unplanned_failover_time = try(data.azapi_resource.protected_item_by_name[0].output.properties.lastSuccessfulUnplannedFailoverTime, "N/A")
-        source_machine_name          = try(data.azapi_resource.protected_item_by_name[0].output.properties.customProperties.sourceMachineName, "N/A")
+        source_machine_name          = try(data.azapi_resource.protected_item_by_name[0].output.properties.customProperties.sourceVmName, "N/A")
         target_vm_name               = try(data.azapi_resource.protected_item_by_name[0].output.properties.customProperties.targetVmName, "N/A")
         target_resource_group_id     = try(data.azapi_resource.protected_item_by_name[0].output.properties.customProperties.targetResourceGroupId, "N/A")
         instance_type                = try(data.azapi_resource.protected_item_by_name[0].output.properties.customProperties.instanceType, "N/A")

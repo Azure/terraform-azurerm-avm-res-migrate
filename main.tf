@@ -10,7 +10,6 @@
 # ========================================
 
 locals {
-  create_new_vault = local.is_initialize_mode && !local.vault_exists_in_solution
   # Determine operation mode
   is_discover_mode   = var.operation_mode == "discover"
   is_get_mode        = var.operation_mode == "get"
@@ -26,8 +25,10 @@ locals {
   # Storage account name generation (similar to Python generate_hash_for_artifact)
   # Only calculate if we're in initialize mode to avoid null value errors
   storage_account_suffix = local.is_initialize_mode && var.source_appliance_name != null ? substr(md5("${var.source_appliance_name}${var.project_name}"), 0, 14) : ""
-  # Check if vault exists in solution
-  vault_exists_in_solution = local.is_initialize_mode && try(data.azapi_resource.replication_solution[0].output.properties.details.extendedDetails.vaultId, null) != null
+  # Check if vault exists in solution (handles both missing solution and missing vaultId)
+  vault_exists_in_solution = local.is_initialize_mode && length(data.azapi_resource.replication_solution) > 0 && try(data.azapi_resource.replication_solution[0].output.properties.details.extendedDetails.vaultId, null) != null && try(data.azapi_resource.replication_solution[0].output.properties.details.extendedDetails.vaultId, "") != ""
+  # Only create new vault if in initialize mode and vault doesn't exist
+  create_new_vault = local.is_initialize_mode && !local.vault_exists_in_solution
 }
 
 # ========================================
@@ -62,11 +63,12 @@ data "azapi_resource" "discovery_solution" {
 
 # Get Data Replication Solution
 data "azapi_resource" "replication_solution" {
-  count = local.is_initialize_mode || local.is_replicate_mode ? 1 : 0
+  count = (local.is_initialize_mode || local.is_replicate_mode || local.is_list_mode || local.is_get_mode || local.is_jobs_mode) && var.project_name != null ? 1 : 0
 
-  name      = "Servers-Migration-ServerMigration_DataReplication"
-  parent_id = data.azapi_resource.migrate_project[0].id
-  type      = "Microsoft.Migrate/migrateprojects/solutions@2020-05-01"
+  name                   = "Servers-Migration-ServerMigration_DataReplication"
+  parent_id              = data.azapi_resource.migrate_project[0].id
+  type                   = "Microsoft.Migrate/migrateprojects/solutions@2020-05-01"
+  response_export_values = ["*"]
 }
 
 # ========================================
@@ -257,6 +259,19 @@ resource "azapi_resource" "replication_extension" {
   schema_validation_enabled = false
   update_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
+  timeouts {
+    create = "30m" # Replication extension setup can take 15-20 minutes
+    delete = "30m"
+    read   = "5m"
+  }
+
+  lifecycle {
+    # Prevent unnecessary recreation when changing between projects
+    create_before_destroy = true
+    # Ignore changes to body as updates often fail on this resource once created
+    ignore_changes = [body]
+  }
+
   depends_on = [
     azapi_resource.replication_policy,
     azapi_update_resource.update_solution_storage
@@ -292,7 +307,7 @@ resource "azapi_resource" "protected_item" {
         targetArcClusterCustomLocationId = var.custom_location_id
         customLocationRegion             = var.location
         fabricDiscoveryMachineId         = var.machine_id != null ? var.machine_id : "${data.azapi_resource.migrate_project[0].id}/machines/${var.machine_name}"
-        disksToInclude = [
+        disksToInclude = length(var.disks_to_include) > 0 ? [
           for disk in var.disks_to_include : {
             diskId                 = disk.disk_id
             diskSizeGB             = disk.disk_size_gb
@@ -301,7 +316,14 @@ resource "azapi_resource" "protected_item" {
             isDynamic              = disk.is_dynamic
             diskPhysicalSectorSize = 512
           }
-        ]
+        ] : var.os_disk_id != null ? [{
+          diskId                 = var.os_disk_id
+          diskSizeGB             = 60
+          diskFileFormat         = "VHDX"
+          isOsDisk               = true
+          isDynamic              = true
+          diskPhysicalSectorSize = 512
+        }] : []
         targetVmName            = var.target_vm_name
         targetResourceGroupId   = var.target_resource_group_id
         storageContainerId      = var.target_storage_path_id
@@ -309,14 +331,14 @@ resource "azapi_resource" "protected_item" {
         targetCpuCores          = var.target_vm_cpu_cores
         sourceCpuCores          = var.source_vm_cpu_cores
         isDynamicRam            = var.is_dynamic_memory_enabled
-        sourceMemoryInMegaBytes = var.source_vm_ram_mb
-        targetMemoryInMegaBytes = var.target_vm_ram_mb
+        sourceMemoryInMegaBytes = tonumber(var.source_vm_ram_mb)
+        targetMemoryInMegaBytes = tonumber(var.target_vm_ram_mb)
         nicsToInclude = [
           for nic in var.nics_to_include : {
             nicId                    = nic.nic_id
             selectionTypeForFailover = nic.selection_type
             targetNetworkId          = nic.target_network_id
-            testNetworkId            = nic.test_network_id
+            testNetworkId            = nic.test_network_id != null ? nic.test_network_id : ""
           }
         ]
         dynamicMemoryConfig = {
@@ -334,12 +356,22 @@ resource "azapi_resource" "protected_item" {
   create_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   delete_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   read_headers              = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  ignore_missing_property   = true
   schema_validation_enabled = false
   update_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  response_export_values    = ["*"]
+  locks                     = []
 
   timeouts {
-    create = "120m"
-    update = "120m"
+    create = "5m"
+    update = "5m"
+    read   = "10m"
+  }
+
+  lifecycle {
+    ignore_changes = [
+      body
+    ]
   }
 }
 
@@ -419,17 +451,19 @@ data "azapi_resource" "vault_for_get" {
 data "azapi_resource" "protected_item_by_id" {
   count = local.is_get_mode && var.protected_item_id != null ? 1 : 0
 
-  resource_id = var.protected_item_id
-  type        = "Microsoft.DataReplication/replicationVaults/protectedItems@2024-09-01"
+  resource_id            = var.protected_item_id
+  type                   = "Microsoft.DataReplication/replicationVaults/protectedItems@2024-09-01"
+  response_export_values = ["*"]
 }
 
 # Get protected item by name (requires project/vault lookup)
 data "azapi_resource" "protected_item_by_name" {
   count = local.is_get_mode && var.protected_item_id == null && var.protected_item_name != null ? 1 : 0
 
-  name      = var.protected_item_name
-  parent_id = var.replication_vault_id != null ? var.replication_vault_id : data.azapi_resource.vault_for_get[0].id
-  type      = "Microsoft.DataReplication/replicationVaults/protectedItems@2024-09-01"
+  name                   = var.protected_item_name
+  parent_id              = var.replication_vault_id != null ? var.replication_vault_id : data.azapi_resource.vault_for_get[0].id
+  type                   = "Microsoft.DataReplication/replicationVaults/protectedItems@2024-09-01"
+  response_export_values = ["*"]
 }
 
 # ========================================
