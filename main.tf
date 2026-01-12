@@ -63,11 +63,12 @@ data "azapi_resource" "discovery_solution" {
 
 # Get Data Replication Solution
 data "azapi_resource" "replication_solution" {
-  count = local.is_initialize_mode || local.is_replicate_mode ? 1 : 0
+  count = (local.is_initialize_mode || local.is_replicate_mode || local.is_list_mode || local.is_get_mode || local.is_jobs_mode) && var.project_name != null ? 1 : 0
 
-  name      = "Servers-Migration-ServerMigration_DataReplication"
-  parent_id = data.azapi_resource.migrate_project[0].id
-  type      = "Microsoft.Migrate/migrateprojects/solutions@2020-05-01"
+  name                   = "Servers-Migration-ServerMigration_DataReplication"
+  parent_id              = data.azapi_resource.migrate_project[0].id
+  type                   = "Microsoft.Migrate/migrateprojects/solutions@2020-05-01"
+  response_export_values = ["*"]
 }
 
 # ========================================
