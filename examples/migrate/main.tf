@@ -1,94 +1,48 @@
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
+#
+# Example: Migrate (Planned Failover)
+# This example demonstrates how to perform a planned failover to migrate a VM to Azure Stack HCI
+#
+
 terraform {
-  required_version = ">= 1.9"
+  required_version = ">= 1.5"
 
   required_providers {
     azapi = {
       source  = "azure/azapi"
-      version = "~> 2.4"
+      version = ">= 1.9, < 3.0"
     }
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.0"
+      version = ">= 3.71, < 5.0"
     }
   }
 }
 
 provider "azurerm" {
   features {}
-  subscription_id = "f6f66a94-f184-45da-ac12-ffbfd8a6eb29"
+  subscription_id = var.subscription_id
 }
 
-provider "azapi" {
-  subscription_id = "f6f66a94-f184-45da-ac12-ffbfd8a6eb29"
-}
+# Perform planned failover (migration)
+module "migrate_vm" {
+  source = "../../"
 
-# ========================================
-# Example 1: Migrate with Source VM Shutdown
-# ========================================
+  location            = var.location
+  name                = "migrate-vm"
+  resource_group_name = var.resource_group_name
+  instance_type       = var.instance_type
+  operation_mode      = "migrate"
+  project_name        = var.project_name
 
-module "migrate_with_shutdown" {
-  source = "../.."
-
-  location = "eastus"
-  # Required variables
-  name                = "migrate-vm-shutdown"
-  resource_group_name = "saifaldinali-vmw-ga-bb-rg"
-  instance_type       = "VMwareToAzStackHCI"
-  # Operation mode
-  operation_mode = "migrate"
   # Protected item to migrate
-  protected_item_id = "/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saifaldinali-vmw-ga-bb-rg/providers/Microsoft.DataReplication/replicationVaults/saifaldinaliVMWGABBreplicationvault/protectedItems/your-vm-name"
-  # Shutdown source VM before migration (RECOMMENDED for data consistency)
-  shutdown_source_vm = true
-  # Tags
-  tags = {
-    Environment   = "Production"
-    Purpose       = "Migration"
-    MigrationType = "PlannedFailover"
-  }
+  protected_item_id = var.protected_item_id
+
+  # Shutdown source VM before migration (recommended for data consistency)
+  shutdown_source_vm = var.shutdown_source_vm
+
+  tags = var.tags
 }
-
-# ========================================
-# Example 2: Migrate without Source VM Shutdown
-# ========================================
-
-module "migrate_without_shutdown" {
-  source = "../.."
-
-  location = "eastus"
-  # Required variables
-  name                = "migrate-vm-no-shutdown"
-  resource_group_name = "saifaldinali-vmw-ga-bb-rg"
-  instance_type       = "VMwareToAzStackHCI"
-  # Operation mode
-  operation_mode = "migrate"
-  # Protected item to migrate
-  protected_item_id = "/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saifaldinali-vmw-ga-bb-rg/providers/Microsoft.DataReplication/replicationVaults/saifaldinaliVMWGABBreplicationvault/protectedItems/your-vm-name"
-  # Do NOT shutdown source VM (less safe but faster)
-  shutdown_source_vm = false
-  # Tags
-  tags = {
-    Environment   = "Development"
-    Purpose       = "Migration"
-    MigrationType = "PlannedFailover"
-  }
-}
-
-# ========================================
-# OUTPUTS - Example 1
-# ========================================
-
-
-
-
-
-
-# ========================================
-# OUTPUTS - Example 2
-# ========================================
-
-
-# ========================================
-# DERIVED OUTPUTS - Pre-Migration Checks
-# ========================================
-
