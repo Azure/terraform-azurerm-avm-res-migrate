@@ -4,8 +4,9 @@
 
 variable "location" {
   type        = string
-  description = "Azure region where the resource should be deployed."
-  nullable    = false
+  default     = null
+  description = "Azure region where the resource should be deployed. If not specified, the resource group's location will be used."
+  nullable    = true
 }
 
 variable "name" {
