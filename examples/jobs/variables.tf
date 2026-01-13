@@ -21,22 +21,10 @@ variable "project_name" {
   default     = "saif-project-120126"
 }
 
-variable "location" {
-  type        = string
-  description = "Optional: The Azure region. If not specified, uses the resource group's location."
-  default     = null
-}
-
 variable "instance_type" {
   type        = string
   description = "The migration instance type (VMwareToAzStackHCI or HyperVToAzStackHCI)"
   default     = "VMwareToAzStackHCI"
-}
-
-variable "job_name" {
-  type        = string
-  description = "The name of a specific job to retrieve. If null, lists all jobs."
-  default     = null
 }
 
 variable "replication_vault_id" {
