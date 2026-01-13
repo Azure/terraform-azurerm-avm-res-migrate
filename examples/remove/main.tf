@@ -31,6 +31,7 @@ provider "azurerm" {
 module "remove_replication" {
   source = "../../"
 
+  location            = var.location
   name                = "remove-replication"
   resource_group_name = var.resource_group_name
   instance_type       = var.instance_type

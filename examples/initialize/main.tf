@@ -50,7 +50,10 @@ module "initialize_replication" {
   # Appliance names - fabrics are auto-discovered from these
   source_appliance_name = var.source_appliance_name
   target_appliance_name = var.target_appliance_name
-  tags                  = var.tags
+  # Optional: explicit fabric IDs (override auto-discovery if needed)
+  source_fabric_id = var.source_fabric_id
+  target_fabric_id = var.target_fabric_id
+  tags             = var.tags
 }
 
 

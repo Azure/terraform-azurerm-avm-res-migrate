@@ -21,6 +21,24 @@ variable "project_name" {
   default     = "saif-project-011326"
 }
 
+variable "source_fabric_id" {
+  type        = string
+  description = "Optional: Explicit source fabric ID. If not provided, it will be auto-discovered from source_appliance_name."
+  default     = null
+}
+
+variable "target_fabric_id" {
+  type        = string
+  description = "Optional: Explicit target fabric ID. If not provided, it will be auto-discovered from target_appliance_name."
+  default     = null
+}
+
+variable "location" {
+  type        = string
+  description = "Optional: The Azure region where resources will be deployed. If not specified, uses the resource group's location."
+  default     = null
+}
+
 variable "source_appliance_name" {
   type        = string
   description = "The name of the source appliance (e.g., 'src' for VMware or HyperV). The module will automatically discover the corresponding fabric."

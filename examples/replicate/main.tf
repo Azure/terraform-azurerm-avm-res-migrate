@@ -31,6 +31,7 @@ provider "azurerm" {
 module "replicate_vm" {
   source = "../../"
 
+  location                   = var.location
   name                       = "vm-replication"
   resource_group_name        = var.resource_group_name
   custom_location_id         = var.custom_location_id
