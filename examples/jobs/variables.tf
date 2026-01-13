@@ -33,12 +33,6 @@ variable "instance_type" {
   default     = "VMwareToAzStackHCI"
 }
 
-variable "job_name" {
-  type        = string
-  description = "The name of a specific job to retrieve. If null, lists all jobs."
-  default     = null
-}
-
 variable "replication_vault_id" {
   type        = string
   description = "The full resource ID of the replication vault (optional, derived from project if not provided)"

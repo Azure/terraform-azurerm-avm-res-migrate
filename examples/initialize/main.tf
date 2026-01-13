@@ -34,8 +34,7 @@ provider "azurerm" {
 module "initialize_replication" {
   source = "../../"
 
-  location = var.location
-  name     = "hci-migration-init"
+  name = "hci-migration-init"
   # Resource configuration
   resource_group_name                = var.resource_group_name
   app_consistent_frequency_minutes   = var.app_consistent_frequency_minutes

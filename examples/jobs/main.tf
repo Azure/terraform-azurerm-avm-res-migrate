@@ -31,15 +31,13 @@ provider "azurerm" {
 module "replication_jobs" {
   source = "../../"
 
-  location            = var.location
   name                = "replication-jobs"
   resource_group_name = var.resource_group_name
   instance_type       = var.instance_type
   operation_mode      = "jobs"
   project_name        = var.project_name
 
-  # Get specific job by name, or list all jobs if null
-  job_name             = var.job_name
+  # Use explicit vault ID
   replication_vault_id = var.replication_vault_id
 
   tags = var.tags

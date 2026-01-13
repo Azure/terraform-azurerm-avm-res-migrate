@@ -31,7 +31,6 @@ provider "azurerm" {
 module "migrate_vm" {
   source = "../../"
 
-  location            = var.location
   name                = "migrate-vm"
   resource_group_name = var.resource_group_name
   instance_type       = var.instance_type

@@ -26,7 +26,6 @@ provider "azapi" {
 module "discover_vms" {
   source = "../.."
 
-  location            = var.location
   name                = "migrate-discover"
   resource_group_name = var.resource_group_name
   instance_type       = var.instance_type

@@ -33,12 +33,6 @@ variable "instance_type" {
   default     = "VMwareToAzStackHCI"
 }
 
-variable "replication_vault_id" {
-  type        = string
-  description = "The full resource ID of the replication vault (optional, derived from project if not provided)"
-  default     = null
-}
-
 variable "tags" {
   type        = map(string)
   description = "Tags to apply to resources"

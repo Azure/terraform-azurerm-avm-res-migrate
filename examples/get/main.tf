@@ -31,17 +31,14 @@ provider "azurerm" {
 module "get_protected_item" {
   source = "../../"
 
-  location            = var.location
   name                = "get-protected-item"
   resource_group_name = var.resource_group_name
   instance_type       = var.instance_type
   operation_mode      = "get"
   project_name        = var.project_name
 
-  # Get by ID (preferred) or by name
-  protected_item_id    = var.protected_item_id
-  protected_item_name  = var.protected_item_name
-  replication_vault_id = var.replication_vault_id
+  # Get by ID
+  protected_item_id = var.protected_item_id
 
   tags = var.tags
 }
