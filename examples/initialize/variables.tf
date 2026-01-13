@@ -6,48 +6,48 @@
 variable "subscription_id" {
   type        = string
   description = "The Azure subscription ID where resources will be deployed"
-  default     = "f6f66a94-f184-45da-ac12-ffbfd8a6eb29"
+  default     = "de3c4d5e-af08-451a-a873-438d86ab6f4b"
 }
 
 variable "resource_group_name" {
   type        = string
   description = "The name of the resource group containing the Azure Migrate project"
-  default     = "saif-project-010626-rg"
+  default     = "saif-project-011326-rg"
 }
 
 variable "project_name" {
   type        = string
   description = "The name of the Azure Migrate project"
-  default     = "saif-project-010626"
+  default     = "saif-project-011326"
 }
 
 variable "source_fabric_id" {
   type        = string
-  description = "The full resource ID of the source replication fabric (obtained from Azure Migrate)"
-  default     = "/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-010626-rg/providers/Microsoft.DataReplication/replicationFabrics/src71e9replicationfabric"
+  description = "Optional: Explicit source fabric ID. If not provided, it will be auto-discovered from source_appliance_name."
+  default     = null
 }
 
 variable "target_fabric_id" {
   type        = string
-  description = "The full resource ID of the target replication fabric (obtained from Azure Migrate)"
-  default     = "/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-010626-rg/providers/Microsoft.DataReplication/replicationFabrics/tgt77a5replicationfabric"
+  description = "Optional: Explicit target fabric ID. If not provided, it will be auto-discovered from target_appliance_name."
+  default     = null
 }
 
 variable "location" {
   type        = string
-  description = "The Azure region where resources will be deployed"
-  default     = "eastus"
+  description = "Optional: The Azure region where resources will be deployed. If not specified, uses the resource group's location."
+  default     = null
 }
 
 variable "source_appliance_name" {
   type        = string
-  description = "The name prefix for the source appliance"
+  description = "The name of the source appliance (e.g., 'src' for VMware or HyperV). The module will automatically discover the corresponding fabric."
   default     = "src"
 }
 
 variable "target_appliance_name" {
   type        = string
-  description = "The name prefix for the target appliance"
+  description = "The name of the target appliance (e.g., 'tgt' for Azure Stack HCI). The module will automatically discover the corresponding fabric."
   default     = "tgt"
 }
 

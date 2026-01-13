@@ -29,6 +29,8 @@ provider "azurerm" {
 }
 
 # Initialize replication infrastructure for VMware to Azure Stack HCI migration
+# NOTE: Fabric IDs are automatically discovered from appliance names
+# You only need to provide source_appliance_name and target_appliance_name
 module "initialize_replication" {
   source = "../../"
 
@@ -46,13 +48,13 @@ module "initialize_replication" {
   project_name = var.project_name
   # Replication policy settings
   recovery_point_history_minutes = var.recovery_point_history_minutes
-  # Appliance names
+  # Appliance names - fabrics are auto-discovered from these
   source_appliance_name = var.source_appliance_name
-  # Fabric IDs (obtained from Azure Migrate)
-  source_fabric_id      = var.source_fabric_id
-  tags                  = var.tags
   target_appliance_name = var.target_appliance_name
-  target_fabric_id      = var.target_fabric_id
+  # Optional: explicit fabric IDs (override auto-discovery if needed)
+  source_fabric_id = var.source_fabric_id
+  target_fabric_id = var.target_fabric_id
+  tags             = var.tags
 }
 
 

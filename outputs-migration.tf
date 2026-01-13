@@ -369,6 +369,18 @@ output "replication_extension_name" {
   value       = local.is_initialize_mode && length(azapi_resource.replication_extension) > 0 ? azapi_resource.replication_extension[0].name : null
 }
 
+output "replication_fabrics_available" {
+  description = "List of all available replication fabrics in the resource group (useful for troubleshooting appliance discovery)"
+  value = local.is_initialize_mode && length(data.azapi_resource_list.replication_fabrics) > 0 ? [
+    for fabric in try(data.azapi_resource_list.replication_fabrics[0].output.value, []) : {
+      name               = try(fabric.name, "N/A")
+      id                 = try(fabric.id, "N/A")
+      instance_type      = try(fabric.properties.customProperties.instanceType, "Unknown")
+      provisioning_state = try(fabric.properties.provisioningState, "Unknown")
+    }
+  ] : []
+}
+
 output "replication_job" {
   description = "Detailed information for a specific replication job"
   value = local.is_jobs_mode && var.job_name != null && length(data.azapi_resource.replication_job) > 0 ? {
@@ -444,13 +456,33 @@ output "resource_group_name_output" {
 }
 
 output "source_fabric_id" {
-  description = "Source fabric ID used for replication"
-  value       = var.source_fabric_id
+  description = "Source fabric ID used for replication (auto-discovered from appliance name or explicitly provided)"
+  value       = local.is_initialize_mode ? local.resolved_source_fabric_id : var.source_fabric_id
+}
+
+output "source_fabric_discovered" {
+  description = "Details of the auto-discovered source fabric (when using appliance name)"
+  value = local.is_initialize_mode && local.discovered_source_fabric != null ? {
+    name          = try(local.discovered_source_fabric.name, "N/A")
+    id            = try(local.discovered_source_fabric.id, "N/A")
+    instance_type = try(local.discovered_source_fabric.properties.customProperties.instanceType, "N/A")
+    state         = try(local.discovered_source_fabric.properties.provisioningState, "N/A")
+  } : null
 }
 
 output "target_fabric_id" {
-  description = "Target fabric ID used for replication"
-  value       = var.target_fabric_id
+  description = "Target fabric ID used for replication (auto-discovered from appliance name or explicitly provided)"
+  value       = local.is_initialize_mode ? local.resolved_target_fabric_id : var.target_fabric_id
+}
+
+output "target_fabric_discovered" {
+  description = "Details of the auto-discovered target fabric (when using appliance name)"
+  value = local.is_initialize_mode && local.discovered_target_fabric != null ? {
+    name          = try(local.discovered_target_fabric.name, "N/A")
+    id            = try(local.discovered_target_fabric.id, "N/A")
+    instance_type = try(local.discovered_target_fabric.properties.customProperties.instanceType, "N/A")
+    state         = try(local.discovered_target_fabric.properties.provisioningState, "N/A")
+  } : null
 }
 
 output "target_vm_name_output" {

@@ -23,8 +23,8 @@ variable "project_name" {
 
 variable "location" {
   type        = string
-  description = "The Azure region where resources will be deployed"
-  default     = "eastus"
+  description = "Optional: The Azure region. If not specified, uses the resource group's location."
+  default     = null
 }
 
 variable "instance_type" {

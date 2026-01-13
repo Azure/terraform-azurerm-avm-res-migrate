@@ -29,6 +29,78 @@ locals {
   vault_exists_in_solution = local.is_initialize_mode && length(data.azapi_resource.replication_solution) > 0 && try(data.azapi_resource.replication_solution[0].output.properties.details.extendedDetails.vaultId, null) != null && try(data.azapi_resource.replication_solution[0].output.properties.details.extendedDetails.vaultId, "") != ""
   # Only create new vault if in initialize mode and vault doesn't exist
   create_new_vault = local.is_initialize_mode && !local.vault_exists_in_solution
+
+  # Fabric instance types for matching
+  source_fabric_instance_type = var.instance_type == "VMwareToAzStackHCI" ? "VMwareMigrate" : "HyperVMigrate"
+  target_fabric_instance_type = "AzStackHCI"
+
+  # Auto-discover source fabric from appliance name
+  # Finds fabric where: name starts with/contains appliance_name AND instanceType matches AND provisioningState is Succeeded
+  discovered_source_fabric = local.is_initialize_mode && var.source_appliance_name != null && var.source_fabric_id == null && length(data.azapi_resource_list.replication_fabrics) > 0 ? try(
+    [for fabric in data.azapi_resource_list.replication_fabrics[0].output.value :
+      fabric if(
+        try(fabric.properties.provisioningState, "") == "Succeeded" &&
+        try(fabric.properties.customProperties.instanceType, "") == local.source_fabric_instance_type &&
+        (
+          lower(try(fabric.name, "")) == lower(var.source_appliance_name) ||
+          startswith(lower(try(fabric.name, "")), lower(var.source_appliance_name)) ||
+          contains(lower(try(fabric.name, "")), lower(var.source_appliance_name))
+        )
+      )
+    ][0],
+    null
+  ) : null
+
+  # Auto-discover target fabric from appliance name (matches CLI behavior)
+  discovered_target_fabric = local.is_initialize_mode && var.target_appliance_name != null && var.target_fabric_id == null && length(data.azapi_resource_list.replication_fabrics) > 0 ? try(
+    [for fabric in data.azapi_resource_list.replication_fabrics[0].output.value :
+      fabric if(
+        try(fabric.properties.provisioningState, "") == "Succeeded" &&
+        try(fabric.properties.customProperties.instanceType, "") == local.target_fabric_instance_type &&
+        (
+          lower(try(fabric.name, "")) == lower(var.target_appliance_name) ||
+          startswith(lower(try(fabric.name, "")), lower(var.target_appliance_name)) ||
+          contains(lower(try(fabric.name, "")), lower(var.target_appliance_name))
+        )
+      )
+    ][0],
+    null
+  ) : null
+
+  # Resolve fabric IDs: priority order is explicit ID > auto-discovered from appliance name
+  resolved_source_fabric_id = var.source_fabric_id != null ? var.source_fabric_id : (
+    local.discovered_source_fabric != null ? try(local.discovered_source_fabric.id, null) : null
+  )
+  resolved_target_fabric_id = var.target_fabric_id != null ? var.target_fabric_id : (
+    local.discovered_target_fabric != null ? try(local.discovered_target_fabric.id, null) : null
+  )
+
+  # Determine if we have fabric configuration inputs (used for count - must be known at plan time)
+  # These check if the user provided either explicit IDs or appliance names for discovery
+  has_fabric_inputs = (var.source_fabric_id != null || var.source_appliance_name != null) && (var.target_fabric_id != null || var.target_appliance_name != null)
+
+  # Extract DRA (Fabric Agent) identity object IDs for role assignments
+  source_dra_object_id = local.is_initialize_mode && length(data.azapi_resource_list.source_fabric_agents) > 0 ? try(
+    [for agent in data.azapi_resource_list.source_fabric_agents[0].output.value :
+      agent.properties.resourceAccessIdentity.objectId if(
+        try(agent.properties.machineName, "") == var.source_appliance_name &&
+        try(agent.properties.customProperties.instanceType, "") == local.source_fabric_instance_type &&
+        try(agent.properties.isResponsive, false) == true
+      )
+    ][0],
+    null
+  ) : null
+
+  target_dra_object_id = local.is_initialize_mode && length(data.azapi_resource_list.target_fabric_agents) > 0 ? try(
+    [for agent in data.azapi_resource_list.target_fabric_agents[0].output.value :
+      agent.properties.resourceAccessIdentity.objectId if(
+        try(agent.properties.machineName, "") == var.target_appliance_name &&
+        try(agent.properties.customProperties.instanceType, "") == local.target_fabric_instance_type &&
+        try(agent.properties.isResponsive, false) == true
+      )
+    ][0],
+    null
+  ) : null
 }
 
 # ========================================
@@ -129,6 +201,30 @@ data "azapi_resource_list" "replication_fabrics" {
   depends_on = [azapi_resource.replication_vault]
 }
 
+# Query source fabric agents (DRAs) for role assignments
+# CLI: get_fabric_agent() retrieves agents from {fabric}/fabricAgents endpoint
+# Note: Uses has_fabric_inputs since resolved_fabric_id is computed at apply time
+data "azapi_resource_list" "source_fabric_agents" {
+  count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
+
+  parent_id              = local.resolved_source_fabric_id
+  type                   = "Microsoft.DataReplication/replicationFabrics/fabricAgents@2024-09-01"
+  response_export_values = ["*"]
+
+  depends_on = [data.azapi_resource_list.replication_fabrics]
+}
+
+# Query target fabric agents (DRAs) for role assignments
+data "azapi_resource_list" "target_fabric_agents" {
+  count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
+
+  parent_id              = local.resolved_target_fabric_id
+  type                   = "Microsoft.DataReplication/replicationFabrics/fabricAgents@2024-09-01"
+  response_export_values = ["*"]
+
+  depends_on = [data.azapi_resource_list.replication_fabrics]
+}
+
 # Create or update replication policy
 resource "azapi_resource" "replication_policy" {
   count = local.is_initialize_mode ? 1 : 0
@@ -200,6 +296,80 @@ resource "azurerm_role_assignment" "vault_storage_blob_contributor" {
   skip_service_principal_aad_check = true
 }
 
+# ========================================
+# DRA (Fabric Agent) Role Assignments
+# CLI: grant_storage_permissions() grants both Contributor and Storage Blob Data Contributor
+#      to source_dra, target_dra, and vault identity
+# Note: These use has_fabric_inputs for count (known at plan time) and rely on
+#       depends_on to ensure DRA data is available before the role assignment.
+#       If DRA lookup fails, the principal_id will be null and Terraform will error,
+#       which is the expected behavior (matching CLI's error for disconnected appliances).
+# ========================================
+
+# Grant Contributor role to source DRA identity
+resource "azurerm_role_assignment" "source_dra_storage_contributor" {
+  count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
+
+  principal_id                     = local.source_dra_object_id
+  scope                            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azurerm_storage_account.cache[0].id
+  role_definition_name             = "Contributor"
+  skip_service_principal_aad_check = true
+
+  depends_on = [data.azapi_resource_list.source_fabric_agents]
+}
+
+# Grant Storage Blob Data Contributor role to source DRA identity
+resource "azurerm_role_assignment" "source_dra_storage_blob_contributor" {
+  count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
+
+  principal_id                     = local.source_dra_object_id
+  scope                            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azurerm_storage_account.cache[0].id
+  role_definition_name             = "Storage Blob Data Contributor"
+  skip_service_principal_aad_check = true
+
+  depends_on = [data.azapi_resource_list.source_fabric_agents]
+}
+
+# Grant Contributor role to target DRA identity
+resource "azurerm_role_assignment" "target_dra_storage_contributor" {
+  count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
+
+  principal_id                     = local.target_dra_object_id
+  scope                            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azurerm_storage_account.cache[0].id
+  role_definition_name             = "Contributor"
+  skip_service_principal_aad_check = true
+
+  depends_on = [data.azapi_resource_list.target_fabric_agents]
+}
+
+# Grant Storage Blob Data Contributor role to target DRA identity
+resource "azurerm_role_assignment" "target_dra_storage_blob_contributor" {
+  count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
+
+  principal_id                     = local.target_dra_object_id
+  scope                            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azurerm_storage_account.cache[0].id
+  role_definition_name             = "Storage Blob Data Contributor"
+  skip_service_principal_aad_check = true
+
+  depends_on = [data.azapi_resource_list.target_fabric_agents]
+}
+
+# Wait for role assignments to propagate (CLI waits 120 seconds after grant_storage_permissions)
+resource "time_sleep" "wait_for_role_propagation" {
+  count = local.is_initialize_mode ? 1 : 0
+
+  create_duration = "120s"
+
+  depends_on = [
+    azurerm_role_assignment.vault_storage_contributor,
+    azurerm_role_assignment.vault_storage_blob_contributor,
+    azurerm_role_assignment.source_dra_storage_contributor,
+    azurerm_role_assignment.source_dra_storage_blob_contributor,
+    azurerm_role_assignment.target_dra_storage_contributor,
+    azurerm_role_assignment.target_dra_storage_blob_contributor
+  ]
+}
+
 # Update AMH solution with storage account ID and vault ID
 resource "azapi_update_resource" "update_solution_storage" {
   count = local.is_initialize_mode ? 1 : 0
@@ -224,32 +394,55 @@ resource "azapi_update_resource" "update_solution_storage" {
 
   depends_on = [
     azapi_resource.replication_vault,
-    azurerm_role_assignment.vault_storage_contributor,
-    azurerm_role_assignment.vault_storage_blob_contributor
+    time_sleep.wait_for_role_propagation
+  ]
+}
+
+# Wait for AMH solution update to propagate (CLI waits 60 seconds after update_amh_solution_storage)
+resource "time_sleep" "wait_for_solution_update" {
+  count = local.is_initialize_mode ? 1 : 0
+
+  create_duration = "60s"
+
+  depends_on = [
+    azapi_update_resource.update_solution_storage
+  ]
+}
+
+# Wait for all prerequisites to be ready before creating extension
+# This matches the CLI behavior which waits 30 seconds after verify_extension_prerequisites
+resource "time_sleep" "wait_for_solution_sync" {
+  count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
+
+  create_duration = "30s"
+
+  depends_on = [
+    time_sleep.wait_for_solution_update,
+    azapi_resource.replication_policy
   ]
 }
 
 # Create replication extension
 resource "azapi_resource" "replication_extension" {
-  count = local.is_initialize_mode && var.source_fabric_id != null && var.target_fabric_id != null ? 1 : 0
+  count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
 
-  name      = "${basename(var.source_fabric_id)}-${basename(var.target_fabric_id)}-MigReplicationExtn"
+  name      = "${basename(local.resolved_source_fabric_id)}-${basename(local.resolved_target_fabric_id)}-MigReplicationExtn"
   parent_id = local.create_new_vault ? azapi_resource.replication_vault[0].id : data.azapi_resource.replication_vault[0].id
   type      = "Microsoft.DataReplication/replicationVaults/replicationExtensions@2024-09-01"
   body = {
     properties = {
       customProperties = var.instance_type == "VMwareToAzStackHCI" ? {
-        azStackHciFabricArmId       = var.target_fabric_id
+        azStackHciFabricArmId       = local.resolved_target_fabric_id
         storageAccountId            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azurerm_storage_account.cache[0].id
         storageAccountSasSecretName = null
         instanceType                = var.instance_type
-        vmwareFabricArmId           = var.source_fabric_id
+        vmwareFabricArmId           = local.resolved_source_fabric_id
         } : {
-        azStackHciFabricArmId       = var.target_fabric_id
+        azStackHciFabricArmId       = local.resolved_target_fabric_id
         storageAccountId            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azurerm_storage_account.cache[0].id
         storageAccountSasSecretName = null
         instanceType                = var.instance_type
-        hyperVFabricArmId           = var.source_fabric_id
+        hyperVFabricArmId           = local.resolved_source_fabric_id
       }
     }
   }
@@ -259,10 +452,18 @@ resource "azapi_resource" "replication_extension" {
   schema_validation_enabled = false
   update_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
+  # Use shorter retry intervals
+  retry = {
+    error_message_regex  = ["RetryableError", "InternalServerError", "RequestTimeout"]
+    interval_seconds     = 10
+    max_interval_seconds = 30
+    randomization_factor = 0.5
+  }
+
   timeouts {
-    create = "30m" # Replication extension setup can take 15-20 minutes
-    delete = "30m"
-    read   = "5m"
+    create = "10m" # CLI waits up to 10 minutes (20 x 30s polling intervals)
+    delete = "5m"
+    read   = "2m"
   }
 
   lifecycle {
@@ -273,8 +474,7 @@ resource "azapi_resource" "replication_extension" {
   }
 
   depends_on = [
-    azapi_resource.replication_policy,
-    azapi_update_resource.update_solution_storage
+    time_sleep.wait_for_solution_sync
   ]
 }
 
@@ -305,7 +505,7 @@ resource "azapi_resource" "protected_item" {
       customProperties = {
         instanceType                     = var.instance_type
         targetArcClusterCustomLocationId = var.custom_location_id
-        customLocationRegion             = var.location
+        customLocationRegion             = coalesce(var.location, data.azurerm_resource_group.this.location)
         fabricDiscoveryMachineId         = var.machine_id != null ? var.machine_id : "${data.azapi_resource.migrate_project[0].id}/machines/${var.machine_name}"
         disksToInclude = length(var.disks_to_include) > 0 ? [
           for disk in var.disks_to_include : {
@@ -316,13 +516,13 @@ resource "azapi_resource" "protected_item" {
             isDynamic              = disk.is_dynamic
             diskPhysicalSectorSize = 512
           }
-        ] : var.os_disk_id != null ? [{
-          diskId                 = var.os_disk_id
-          diskSizeGB             = 60
-          diskFileFormat         = "VHDX"
-          isOsDisk               = true
-          isDynamic              = true
-          diskPhysicalSectorSize = 512
+          ] : var.os_disk_id != null ? [{
+            diskId                 = var.os_disk_id
+            diskSizeGB             = 60
+            diskFileFormat         = "VHDX"
+            isOsDisk               = true
+            isDynamic              = true
+            diskPhysicalSectorSize = 512
         }] : []
         targetVmName            = var.target_vm_name
         targetResourceGroupId   = var.target_resource_group_id
