@@ -3,8 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 #
-# Example: Remove Protected Item (Disable Replication)
-# This example demonstrates how to stop replication for a protected VM
+# Example: Remove VM Replication
+# This example demonstrates how to remove/disable replication for a protected item
 #
 
 terraform {
@@ -27,22 +27,15 @@ provider "azurerm" {
   subscription_id = var.subscription_id
 }
 
-# Remove protected item (disable replication)
+# Remove replication for a protected item
 module "remove_replication" {
   source = "../../"
 
-  location            = var.location
   name                = "remove-replication"
   resource_group_name = var.resource_group_name
-  instance_type       = var.instance_type
+  force_remove        = var.force_remove
+  location            = var.location
   operation_mode      = "remove"
-  project_name        = var.project_name
-
-  # Protected item to remove
-  target_object_id = var.target_object_id
-
-  # Force remove (use when normal removal fails)
-  force_remove = var.force_remove
-
-  tags = var.tags
+  tags                = var.tags
+  target_object_id    = var.target_object_id
 }

@@ -3,53 +3,40 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-variable "subscription_id" {
-  type        = string
-  description = "The Azure subscription ID where resources will be deployed"
-  default     = "f6f66a94-f184-45da-ac12-ffbfd8a6eb29"
-}
-
 variable "resource_group_name" {
   type        = string
-  description = "The name of the resource group containing the Azure Migrate project"
-  default     = "saif-project-120126-rg"
+  description = "The name of the resource group where the replication vault exists"
 }
 
-variable "project_name" {
+variable "subscription_id" {
   type        = string
-  description = "The name of the Azure Migrate project (optional, used for job tracking)"
-  default     = "saif-project-120126"
-}
-
-variable "location" {
-  type        = string
-  description = "Optional: The Azure region. If not specified, uses the resource group's location."
-  default     = null
-}
-
-variable "instance_type" {
-  type        = string
-  description = "The migration instance type (VMwareToAzStackHCI or HyperVToAzStackHCI)"
-  default     = "VMwareToAzStackHCI"
+  description = "The Azure subscription ID"
 }
 
 variable "target_object_id" {
   type        = string
-  description = "The full resource ID of the protected item to remove from replication"
-  default     = "/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-120126-rg/providers/Microsoft.DataReplication/replicationVaults/saif-project-16712replicationvault/protectedItems/100-69-177-104-f0d9ffab-ffc9-4567-84a3-792f2f01fc57_5023a8b8-6ecc-b7ad-4e88-8db9f80f737c"
+  description = "The protected item ARM ID for which replication needs to be disabled. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.DataReplication/replicationVaults/{vault-name}/protectedItems/{item-name}"
+
+  validation {
+    condition     = can(regex("^/subscriptions/[^/]+/resourceGroups/[^/]+/providers/Microsoft\\.DataReplication/replicationVaults/[^/]+/protectedItems/[^/]+$", var.target_object_id))
+    error_message = "target_object_id must be a valid protected item ARM ID in the format: /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.DataReplication/replicationVaults/{vault-name}/protectedItems/{item-name}"
+  }
 }
 
 variable "force_remove" {
   type        = bool
-  description = "Whether to force remove the protected item (use when normal removal fails)"
   default     = false
+  description = "Specifies whether the replication needs to be force removed. Use with caution as force removal may leave resources in an inconsistent state."
+}
+
+variable "location" {
+  type        = string
+  default     = null
+  description = "Optional: The Azure region. If not specified, uses the resource group's location."
 }
 
 variable "tags" {
   type        = map(string)
-  description = "Tags to apply to resources"
-  default = {
-    Environment = "Test"
-    Purpose     = "RemoveReplication"
-  }
+  default     = {}
+  description = "Tags to apply to the resources"
 }
