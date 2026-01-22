@@ -17,13 +17,13 @@ variable "location" {
 
 variable "project_name" {
   type        = string
-  default     = "saif-project-010626"
   description = "The name of the Azure Migrate project"
+  default     = "saif-project-011326"
 }
 
 variable "resource_group_name" {
   type        = string
-  default     = "saif-project-010626-rg"
+  default     = "saif-project-011326-rg"
   description = "The name of the resource group containing the Azure Migrate project"
 }
 
