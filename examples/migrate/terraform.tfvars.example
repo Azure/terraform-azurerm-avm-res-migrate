@@ -1,0 +1,33 @@
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
+#
+# Example terraform.tfvars file for migrate operation
+# Copy this file to terraform.tfvars and update with your actual values
+#
+
+# Azure Subscription ID
+subscription_id = "00000000-0000-0000-0000-000000000000"
+
+# Resource Group containing your Azure Migrate project
+resource_group_name = "my-migrate-project-rg"
+
+# Protected Item (replicated VM) to migrate - full resource ID
+# Get this from the 'list' or 'get' operation output
+protected_item_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-resource-group/providers/Microsoft.DataReplication/replicationVaults/myprojectreplicationvault/protectedItems/my-vm-name"
+
+# Migration instance type (must match the protected item)
+instance_type = "VMwareToAzStackHCI" # or "HyperVToAzStackHCI"
+
+# Whether to shutdown the source VM before migration
+# Recommended: true for production migrations to ensure data consistency
+# Set to false only for testing or if source VM is already offline
+shutdown_source_vm = true
+
+# Optional: Tags to apply
+# tags = {
+#   Environment = "Production"
+#   ManagedBy   = "Terraform"
+#   Purpose     = "Migration"
+# }
