@@ -5,7 +5,7 @@
 
 variable "custom_location_id" {
   type        = string
-  default     = "/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/EDGECI-REGISTRATION-rr1n25r1606-i3dfqVNA/providers/Microsoft.ExtendedLocation/customLocations/n25r1606-cl-customLocation"
+  default     = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-hci-rg/providers/Microsoft.ExtendedLocation/customLocations/my-custom-location"
   description = "The full resource ID of the Azure Stack HCI custom location"
 }
 
@@ -56,7 +56,7 @@ variable "location" {
 
 variable "machine_id" {
   type        = string
-  default     = "/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-120126-rg/providers/Microsoft.OffAzure/VMwareSites/src3225site/machines/100-69-177-104-f0d9ffab-ffc9-4567-84a3-792f2f01fc57_5023a8b8-6ecc-b7ad-4e88-8db9f80f737c"
+  default     = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-migrate-project-rg/providers/Microsoft.Migrate/MigrateProjects/my-migrate-project/Machines/00000000-0000-0000-0000-000000000000"
   description = "The full resource ID of the machine to replicate (OffAzure/VMwareSites path)"
 }
 
@@ -92,43 +92,43 @@ variable "nics_to_include" {
 
 variable "os_disk_id" {
   type        = string
-  default     = "6000C291-b808-b317-6162-d298b124743b"
+  default     = "00000000-0000-0000-0000-000000000000"
   description = "The OS disk ID of the source VM"
 }
 
 variable "policy_name" {
   type        = string
-  default     = "saif-project-16712replicationvaultVMwareToAzStackHCIpolicy"
+  default     = "myprojectreplicationvaultVMwareToAzStackHCIpolicy"
   description = "The name of the replication policy"
 }
 
 variable "project_name" {
   type        = string
-  default     = "saif-project-120126"
+  default     = "my-migrate-project"
   description = "The name of the Azure Migrate project"
 }
 
 variable "replication_extension_name" {
   type        = string
-  default     = "srcd586replicationfabric-tgt7f56replicationfabric-MigReplicationExtn"
+  default     = "srcreplicationfabric-tgtreplicationfabric-MigReplicationExtn"
   description = "The name of the replication extension"
 }
 
 variable "replication_vault_id" {
   type        = string
-  default     = "/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-120126-rg/providers/Microsoft.DataReplication/replicationVaults/saif-project-16712replicationvault"
+  default     = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-migrate-project-rg/providers/Microsoft.DataReplication/replicationVaults/myprojectreplicationvault"
   description = "The full resource ID of the replication vault"
 }
 
 variable "resource_group_name" {
   type        = string
-  default     = "saif-project-120126-rg"
+  default     = "my-migrate-project-rg"
   description = "The name of the resource group containing the Azure Migrate project"
 }
 
 variable "run_as_account_id" {
   type        = string
-  default     = "/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-120126-rg/providers/Microsoft.OffAzure/VMwareSites/src3225site/runasaccounts/58093f44-117a-561b-be13-d751e1b22ca9"
+  default     = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-migrate-project-rg/providers/Microsoft.OffAzure/VMwareSites/my-vmware-site/runasaccounts/00000000-0000-0000-0000-000000000000"
   description = "The full resource ID of the run as account (from vCenter)"
 }
 
@@ -140,7 +140,7 @@ variable "source_appliance_name" {
 
 variable "source_fabric_agent_name" {
   type        = string
-  default     = "srcd586dra"
+  default     = "srcdra"
   description = "The name of the source fabric DRA"
 }
 
@@ -158,7 +158,7 @@ variable "source_vm_ram_mb" {
 
 variable "subscription_id" {
   type        = string
-  default     = "f6f66a94-f184-45da-ac12-ffbfd8a6eb29"
+  default     = "00000000-0000-0000-0000-000000000000"
   description = "The Azure subscription ID where resources will be deployed"
 }
 
@@ -180,31 +180,31 @@ variable "target_appliance_name" {
 
 variable "target_fabric_agent_name" {
   type        = string
-  default     = "tgt7f56dra"
+  default     = "tgtdra"
   description = "The name of the target fabric DRA"
 }
 
 variable "target_hci_cluster_id" {
   type        = string
-  default     = "/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/EDGECI-REGISTRATION-rr1n25r1606-i3dfqVNA/providers/Microsoft.AzureStackHCI/clusters/n25r1606-cl"
+  default     = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-hci-rg/providers/Microsoft.AzureStackHCI/clusters/my-hci-cluster"
   description = "The full resource ID of the target Azure Stack HCI cluster"
 }
 
 variable "target_resource_group_id" {
   type        = string
-  default     = "/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/saif-project-120126-rg"
+  default     = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-target-rg"
   description = "The full resource ID of the target resource group"
 }
 
 variable "target_storage_path_id" {
   type        = string
-  default     = "/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/EDGECI-REGISTRATION-rr1n25r1606-i3dfqVNA/providers/Microsoft.AzureStackHCI/storageContainers/UserStorage1-bd705ded518141ff99bbefb30642e19f"
+  default     = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-hci-rg/providers/Microsoft.AzureStackHCI/storageContainers/my-storage-container"
   description = "The full resource ID of the target storage path"
 }
 
 variable "target_virtual_switch_id" {
   type        = string
-  default     = "/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/EDGECI-REGISTRATION-rr1n25r1606-i3dfqVNA/providers/Microsoft.AzureStackHCI/logicalnetworks/lnet-n25r1606-cl"
+  default     = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-hci-rg/providers/Microsoft.AzureStackHCI/logicalnetworks/my-logical-network"
   description = "The full resource ID of the target virtual switch/network"
 }
 

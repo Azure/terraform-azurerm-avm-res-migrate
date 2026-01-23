@@ -29,7 +29,7 @@ variable "location" {
 
 variable "project_name" {
   type        = string
-  default     = "saif-project-011326"
+  default     = "my-migrate-project"
   description = "The name of the Azure Migrate project"
 }
 
@@ -41,7 +41,7 @@ variable "recovery_point_history_minutes" {
 
 variable "resource_group_name" {
   type        = string
-  default     = "saif-project-011326-rg"
+  default     = "my-migrate-project-rg"
   description = "The name of the resource group containing the Azure Migrate project"
 }
 
@@ -59,7 +59,7 @@ variable "source_fabric_id" {
 
 variable "subscription_id" {
   type        = string
-  default     = "de3c4d5e-af08-451a-a873-438d86ab6f4b"
+  default     = "00000000-0000-0000-0000-000000000000"
   description = "The Azure subscription ID where resources will be deployed"
 }
 

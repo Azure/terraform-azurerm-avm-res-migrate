@@ -5,16 +5,19 @@
 
 variable "resource_group_name" {
   type        = string
+  default     = "my-migrate-project-rg"
   description = "The name of the resource group where the replication vault exists"
 }
 
 variable "subscription_id" {
   type        = string
+  default     = "00000000-0000-0000-0000-000000000000"
   description = "The Azure subscription ID"
 }
 
 variable "target_object_id" {
   type        = string
+  default     = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-migrate-project-rg/providers/Microsoft.DataReplication/replicationVaults/myprojectreplicationvault/protectedItems/my-vm-name"
   description = "The protected item ARM ID for which replication needs to be disabled. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.DataReplication/replicationVaults/{vault-name}/protectedItems/{item-name}"
 
   validation {

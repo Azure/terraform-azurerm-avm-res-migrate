@@ -18,18 +18,18 @@ variable "location" {
 variable "project_name" {
   type        = string
   description = "The name of the Azure Migrate project"
-  default     = "saif-project-011326"
+  default     = "my-migrate-project"
 }
 
 variable "resource_group_name" {
   type        = string
-  default     = "saif-project-011326-rg"
+  default     = "my-migrate-project-rg"
   description = "The name of the resource group containing the Azure Migrate project"
 }
 
 variable "subscription_id" {
   type        = string
-  default     = "f6f66a94-f184-45da-ac12-ffbfd8a6eb29"
+  default     = "00000000-0000-0000-0000-000000000000"
   description = "The Azure subscription ID where resources will be deployed"
 }
 
