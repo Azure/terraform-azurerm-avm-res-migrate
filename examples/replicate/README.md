@@ -103,7 +103,7 @@ Description: The full resource ID of the Azure Stack HCI custom location
 
 Type: `string`
 
-Default: `"/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/EDGECI-REGISTRATION-rr1n25r1606-i3dfqVNA/providers/Microsoft.ExtendedLocation/customLocations/n25r1606-cl-customLocation"`
+Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-hci-rg/providers/Microsoft.ExtendedLocation/customLocations/my-custom-location"`
 
 ### <a name="input_disks_to_include"></a> [disks\_to\_include](#input\_disks\_to\_include)
 
@@ -162,7 +162,7 @@ Description: The full resource ID of the machine to replicate (OffAzure/VMwareSi
 
 Type: `string`
 
-Default: `"/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-120126-rg/providers/Microsoft.OffAzure/VMwareSites/src3225site/machines/100-69-177-104-f0d9ffab-ffc9-4567-84a3-792f2f01fc57_5023a8b8-6ecc-b7ad-4e88-8db9f80f737c"`
+Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-migrate-project-rg/providers/Microsoft.Migrate/MigrateProjects/my-migrate-project/Machines/00000000-0000-0000-0000-000000000000"`
 
 ### <a name="input_nics_to_include"></a> [nics\_to\_include](#input\_nics\_to\_include)
 
@@ -187,7 +187,7 @@ Description: The OS disk ID of the source VM
 
 Type: `string`
 
-Default: `"6000C291-b808-b317-6162-d298b124743b"`
+Default: `"00000000-0000-0000-0000-000000000000"`
 
 ### <a name="input_policy_name"></a> [policy\_name](#input\_policy\_name)
 
@@ -195,7 +195,7 @@ Description: The name of the replication policy
 
 Type: `string`
 
-Default: `"saif-project-16712replicationvaultVMwareToAzStackHCIpolicy"`
+Default: `"myprojectreplicationvaultVMwareToAzStackHCIpolicy"`
 
 ### <a name="input_project_name"></a> [project\_name](#input\_project\_name)
 
@@ -203,7 +203,7 @@ Description: The name of the Azure Migrate project
 
 Type: `string`
 
-Default: `"saif-project-120126"`
+Default: `"my-migrate-project"`
 
 ### <a name="input_replication_extension_name"></a> [replication\_extension\_name](#input\_replication\_extension\_name)
 
@@ -211,7 +211,7 @@ Description: The name of the replication extension
 
 Type: `string`
 
-Default: `"srcd586replicationfabric-tgt7f56replicationfabric-MigReplicationExtn"`
+Default: `"srcreplicationfabric-tgtreplicationfabric-MigReplicationExtn"`
 
 ### <a name="input_replication_vault_id"></a> [replication\_vault\_id](#input\_replication\_vault\_id)
 
@@ -219,7 +219,7 @@ Description: The full resource ID of the replication vault
 
 Type: `string`
 
-Default: `"/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-120126-rg/providers/Microsoft.DataReplication/replicationVaults/saif-project-16712replicationvault"`
+Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-migrate-project-rg/providers/Microsoft.DataReplication/replicationVaults/myprojectreplicationvault"`
 
 ### <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name)
 
@@ -227,7 +227,7 @@ Description: The name of the resource group containing the Azure Migrate project
 
 Type: `string`
 
-Default: `"saif-project-120126-rg"`
+Default: `"my-migrate-project-rg"`
 
 ### <a name="input_run_as_account_id"></a> [run\_as\_account\_id](#input\_run\_as\_account\_id)
 
@@ -235,7 +235,7 @@ Description: The full resource ID of the run as account (from vCenter)
 
 Type: `string`
 
-Default: `"/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-120126-rg/providers/Microsoft.OffAzure/VMwareSites/src3225site/runasaccounts/58093f44-117a-561b-be13-d751e1b22ca9"`
+Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-migrate-project-rg/providers/Microsoft.OffAzure/VMwareSites/my-vmware-site/runasaccounts/00000000-0000-0000-0000-000000000000"`
 
 ### <a name="input_source_appliance_name"></a> [source\_appliance\_name](#input\_source\_appliance\_name)
 
@@ -251,7 +251,7 @@ Description: The name of the source fabric DRA
 
 Type: `string`
 
-Default: `"srcd586dra"`
+Default: `"srcdra"`
 
 ### <a name="input_source_vm_cpu_cores"></a> [source\_vm\_cpu\_cores](#input\_source\_vm\_cpu\_cores)
 
@@ -275,7 +275,7 @@ Description: The Azure subscription ID where resources will be deployed
 
 Type: `string`
 
-Default: `"f6f66a94-f184-45da-ac12-ffbfd8a6eb29"`
+Default: `"00000000-0000-0000-0000-000000000000"`
 
 ### <a name="input_tags"></a> [tags](#input\_tags)
 
@@ -307,7 +307,7 @@ Description: The name of the target fabric DRA
 
 Type: `string`
 
-Default: `"tgt7f56dra"`
+Default: `"tgtdra"`
 
 ### <a name="input_target_hci_cluster_id"></a> [target\_hci\_cluster\_id](#input\_target\_hci\_cluster\_id)
 
@@ -315,7 +315,7 @@ Description: The full resource ID of the target Azure Stack HCI cluster
 
 Type: `string`
 
-Default: `"/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/EDGECI-REGISTRATION-rr1n25r1606-i3dfqVNA/providers/Microsoft.AzureStackHCI/clusters/n25r1606-cl"`
+Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-hci-rg/providers/Microsoft.AzureStackHCI/clusters/my-hci-cluster"`
 
 ### <a name="input_target_resource_group_id"></a> [target\_resource\_group\_id](#input\_target\_resource\_group\_id)
 
@@ -323,7 +323,7 @@ Description: The full resource ID of the target resource group
 
 Type: `string`
 
-Default: `"/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/saif-project-120126-rg"`
+Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-target-rg"`
 
 ### <a name="input_target_storage_path_id"></a> [target\_storage\_path\_id](#input\_target\_storage\_path\_id)
 
@@ -331,7 +331,7 @@ Description: The full resource ID of the target storage path
 
 Type: `string`
 
-Default: `"/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/EDGECI-REGISTRATION-rr1n25r1606-i3dfqVNA/providers/Microsoft.AzureStackHCI/storageContainers/UserStorage1-bd705ded518141ff99bbefb30642e19f"`
+Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-hci-rg/providers/Microsoft.AzureStackHCI/storageContainers/my-storage-container"`
 
 ### <a name="input_target_virtual_switch_id"></a> [target\_virtual\_switch\_id](#input\_target\_virtual\_switch\_id)
 
@@ -339,7 +339,7 @@ Description: The full resource ID of the target virtual switch/network
 
 Type: `string`
 
-Default: `"/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/EDGECI-REGISTRATION-rr1n25r1606-i3dfqVNA/providers/Microsoft.AzureStackHCI/logicalnetworks/lnet-n25r1606-cl"`
+Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-hci-rg/providers/Microsoft.AzureStackHCI/logicalnetworks/my-logical-network"`
 
 ### <a name="input_target_vm_cpu_cores"></a> [target\_vm\_cpu\_cores](#input\_target\_vm\_cpu\_cores)
 

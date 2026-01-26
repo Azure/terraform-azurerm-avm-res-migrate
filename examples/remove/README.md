@@ -91,25 +91,7 @@ No resources.
 <!-- markdownlint-disable MD013 -->
 ## Required Inputs
 
-The following input variables are required:
-
-### <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name)
-
-Description: The name of the resource group where the replication vault exists
-
-Type: `string`
-
-### <a name="input_subscription_id"></a> [subscription\_id](#input\_subscription\_id)
-
-Description: The Azure subscription ID
-
-Type: `string`
-
-### <a name="input_target_object_id"></a> [target\_object\_id](#input\_target\_object\_id)
-
-Description: The protected item ARM ID for which replication needs to be disabled. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.DataReplication/replicationVaults/{vault-name}/protectedItems/{item-name}
-
-Type: `string`
+No required inputs.
 
 ## Optional Inputs
 
@@ -131,6 +113,22 @@ Type: `string`
 
 Default: `null`
 
+### <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name)
+
+Description: The name of the resource group where the replication vault exists
+
+Type: `string`
+
+Default: `"my-migrate-project-rg"`
+
+### <a name="input_subscription_id"></a> [subscription\_id](#input\_subscription\_id)
+
+Description: The Azure subscription ID
+
+Type: `string`
+
+Default: `"00000000-0000-0000-0000-000000000000"`
+
 ### <a name="input_tags"></a> [tags](#input\_tags)
 
 Description: Tags to apply to the resources
@@ -138,6 +136,14 @@ Description: Tags to apply to the resources
 Type: `map(string)`
 
 Default: `{}`
+
+### <a name="input_target_object_id"></a> [target\_object\_id](#input\_target\_object\_id)
+
+Description: The protected item ARM ID for which replication needs to be disabled. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.DataReplication/replicationVaults/{vault-name}/protectedItems/{item-name}
+
+Type: `string`
+
+Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-migrate-project-rg/providers/Microsoft.DataReplication/replicationVaults/myprojectreplicationvault/protectedItems/my-vm-name"`
 
 ## Outputs
 

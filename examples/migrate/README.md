@@ -4,78 +4,6 @@
 
 This example demonstrates how to perform a planned failover (migration) of a replicated VM to Azure Stack HCI using the `migrate` operation mode.
 
-## Overview
-
-The migrate operation performs a planned failover to move a replicated VM from the source environment (VMware or Hyper-V) to Azure Stack HCI. This is the final step in the migration process after:
-
-1. Initializing the replication infrastructure (`initialize` operation)
-2. Setting up VM replication (`replicate` operation)
-3. Monitoring replication health and allowing initial sync to complete
-
-## Prerequisites
-
-Before running this example:
-
-1. **Completed Initialization**: Run the `initialize` operation to set up the replication infrastructure
-2. **Active Replication**: Run the `replicate` operation to start VM replication
-3. **Healthy Replication State**: Ensure the protected item shows healthy replication status
-4. **Obtain Protected Item ID**: Use the `list` or `get` operation to retrieve the protected item resource ID
-
-## Key Parameters
-
-- **`protected_item_id`**: Full resource ID of the replicated VM (from the `list` or `get` operation)
-- **`instance_type`**: Must match the instance type used during replication (`VMwareToAzStackHCI` or `HyperVToAzStackHCI`)
-- **`shutdown_source_vm`**: Whether to shut down the source VM before migration (recommended: `true` for production)
-
-## Usage
-
-1. Copy `terraform.tfvars.example` to `terraform.tfvars`:
-
-```bash
-cp terraform.tfvars.example terraform.tfvars
-```
-
-2. Update `terraform.tfvars` with your values:
-   - Set your subscription ID
-   - Set the resource group name
-   - Provide the protected item ID (from `list` or `get` operation)
-   - Confirm the instance type matches your source environment
-   - Set shutdown_source_vm (true recommended for production)
-
-3. Initialize and apply:
-
-```bash
-terraform init
-terraform plan
-terraform apply
-```
-
-## Important Notes
-
-- **Data Consistency**: Setting `shutdown_source_vm = true` ensures data consistency by shutting down the source VM before the final sync
-- **Downtime**: The migration will cause downtime as the source VM is shut down and the target VM is brought online
-- **Job Tracking**: The operation returns a job ID that can be used to monitor migration progress
-- **Rollback**: Once migration is complete, the source VM can be started again if rollback is needed
-- **Cleanup**: After successful migration and validation, use the `remove` operation to clean up replication resources
-
-## Migration Process
-
-The planned failover operation:
-
-1. Validates the protected item is ready for migration
-2. Optionally shuts down the source VM (if `shutdown_source_vm = true`)
-3. Performs a final replication sync
-4. Creates the target VM on Azure Stack HCI
-5. Starts the target VM
-6. Updates the protected item status
-
-## Outputs
-
-- **`migration_job_id`**: Async operation ID for tracking migration job status
-- **`migration_operation_details`**: Detailed response including status and properties
-- **`migration_protected_item_details`**: Pre-migration state of the protected item
-- **`protected_item_id`**: The protected item resource ID that was migrated
-
 ```hcl
 # --------------------------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
@@ -112,9 +40,9 @@ module "migrate_vm" {
 
   name                = "vm-migration"
   resource_group_name = var.resource_group_name
+  instance_type       = var.instance_type
   operation_mode      = "migrate"
   protected_item_id   = var.protected_item_id
-  instance_type       = var.instance_type
   shutdown_source_vm  = var.shutdown_source_vm
   tags                = var.tags
 }

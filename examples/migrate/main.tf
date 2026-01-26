@@ -33,9 +33,9 @@ module "migrate_vm" {
 
   name                = "vm-migration"
   resource_group_name = var.resource_group_name
+  instance_type       = var.instance_type
   operation_mode      = "migrate"
   protected_item_id   = var.protected_item_id
-  instance_type       = var.instance_type
   shutdown_source_vm  = var.shutdown_source_vm
   tags                = var.tags
 }

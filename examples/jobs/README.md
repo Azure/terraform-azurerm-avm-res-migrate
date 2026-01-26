@@ -88,7 +88,7 @@ Description: The name of the Azure Migrate project
 
 Type: `string`
 
-Default: `"saif-project-120126"`
+Default: `"my-migrate-project"`
 
 ### <a name="input_replication_vault_id"></a> [replication\_vault\_id](#input\_replication\_vault\_id)
 
@@ -96,7 +96,7 @@ Description: The full resource ID of the replication vault (optional, derived fr
 
 Type: `string`
 
-Default: `"/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-120126-rg/providers/Microsoft.DataReplication/replicationVaults/saif-project-16712replicationvault"`
+Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-migrate-project-rg/providers/Microsoft.DataReplication/replicationVaults/myprojectreplicationvault"`
 
 ### <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name)
 
@@ -104,7 +104,7 @@ Description: The name of the resource group containing the Azure Migrate project
 
 Type: `string`
 
-Default: `"saif-project-120126-rg"`
+Default: `"my-migrate-project-rg"`
 
 ### <a name="input_subscription_id"></a> [subscription\_id](#input\_subscription\_id)
 
@@ -112,7 +112,7 @@ Description: The Azure subscription ID where resources will be deployed
 
 Type: `string`
 
-Default: `"f6f66a94-f184-45da-ac12-ffbfd8a6eb29"`
+Default: `"00000000-0000-0000-0000-000000000000"`
 
 ### <a name="input_tags"></a> [tags](#input\_tags)
 
