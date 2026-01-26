@@ -42,6 +42,18 @@ variable "crash_consistent_frequency_minutes" {
   description = "Crash consistent snapshot frequency in minutes"
 }
 
+variable "create_migrate_project" {
+  type        = bool
+  default     = false
+  description = "Whether to create a new Azure Migrate project. If false, an existing project is queried."
+}
+
+variable "create_resource_group" {
+  type        = bool
+  default     = false
+  description = "Whether to create a new resource group. If false, an existing resource group is queried. When true, location must be specified."
+}
+
 variable "custom_location_id" {
   type        = string
   default     = null
@@ -189,7 +201,7 @@ variable "job_name" {
 variable "location" {
   type        = string
   default     = null
-  description = "Azure region where the resource should be deployed. If not specified, the resource group's location will be used."
+  description = "Azure region where resources should be deployed. Required when create_resource_group or create_migrate_project is true."
 }
 
 variable "lock" {
@@ -266,11 +278,11 @@ variable "nics_to_include" {
 variable "operation_mode" {
   type        = string
   default     = "discover"
-  description = "The migration operation to perform: discover, initialize, replicate, jobs, remove, get, list, or migrate"
+  description = "The migration operation to perform: create-project, discover, initialize, replicate, jobs, remove, get, list, or migrate"
 
   validation {
-    condition     = contains(["discover", "initialize", "replicate", "jobs", "remove", "get", "list", "migrate"], var.operation_mode)
-    error_message = "operation_mode must be one of: discover, initialize, replicate, jobs, remove, get, list, migrate."
+    condition     = contains(["create-project", "discover", "initialize", "replicate", "jobs", "remove", "get", "list", "migrate"], var.operation_mode)
+    error_message = "operation_mode must be one of: create-project, discover, initialize, replicate, jobs, remove, get, list, migrate."
   }
 }
 

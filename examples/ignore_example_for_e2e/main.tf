@@ -2,9 +2,9 @@ terraform {
   required_version = "~> 1.5"
 
   required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 4.21"
+    azapi = {
+      source  = "azure/azapi"
+      version = "~> 2.4"
     }
     modtm = {
       source  = "azure/modtm"
@@ -17,10 +17,7 @@ terraform {
   }
 }
 
-provider "azurerm" {
-  features {}
-}
-
+provider "azapi" {}
 
 ## Section to provide a random Azure region for the resource group
 # This allows us to randomize the region for the resource group.

@@ -10,6 +10,10 @@
 # ========================================
 
 locals {
+  # Create new resource group if requested
+  create_new_resource_group = var.create_resource_group
+  # Create new Migrate project if project_name is provided but create_migrate_project is true
+  create_new_project = var.create_migrate_project && var.project_name != null
   # Only create new vault if in initialize mode and vault doesn't exist
   create_new_vault = local.is_initialize_mode && !local.vault_exists_in_solution
   # Auto-discover source fabric from appliance name
@@ -47,14 +51,15 @@ locals {
   # These check if the user provided either explicit IDs or appliance names for discovery
   has_fabric_inputs = (var.source_fabric_id != null || var.source_appliance_name != null) && (var.target_fabric_id != null || var.target_appliance_name != null)
   # Determine operation mode
-  is_discover_mode   = var.operation_mode == "discover"
-  is_get_mode        = var.operation_mode == "get"
-  is_initialize_mode = var.operation_mode == "initialize"
-  is_jobs_mode       = var.operation_mode == "jobs"
-  is_list_mode       = var.operation_mode == "list"
-  is_migrate_mode    = var.operation_mode == "migrate"
-  is_remove_mode     = var.operation_mode == "remove"
-  is_replicate_mode  = var.operation_mode == "replicate"
+  is_create_project_mode = var.operation_mode == "create-project"
+  is_discover_mode       = var.operation_mode == "discover"
+  is_get_mode            = var.operation_mode == "get"
+  is_initialize_mode     = var.operation_mode == "initialize"
+  is_jobs_mode           = var.operation_mode == "jobs"
+  is_list_mode           = var.operation_mode == "list"
+  is_migrate_mode        = var.operation_mode == "migrate"
+  is_remove_mode         = var.operation_mode == "remove"
+  is_replicate_mode      = var.operation_mode == "replicate"
   # Resolve fabric IDs: priority order is explicit ID > auto-discovered from appliance name
   resolved_source_fabric_id = var.source_fabric_id != null ? var.source_fabric_id : (
     local.discovered_source_fabric != null ? try(local.discovered_source_fabric.id, null) : null
@@ -62,6 +67,12 @@ locals {
   resolved_target_fabric_id = var.target_fabric_id != null ? var.target_fabric_id : (
     local.discovered_target_fabric != null ? try(local.discovered_target_fabric.id, null) : null
   )
+  # Resolved Migrate project ID (created or existing)
+  migrate_project_id = local.create_new_project ? azapi_resource.migrate_project[0].id : (
+    length(data.azapi_resource.migrate_project_existing) > 0 ? data.azapi_resource.migrate_project_existing[0].id : null
+  )
+  # Resolved resource group (created or existing)
+  resource_group_id = local.create_new_resource_group ? azapi_resource.resource_group[0].id : data.azapi_resource.resource_group_existing[0].id
   # Resource group reference
   resource_group_name = var.resource_group_name
   # Extract DRA (Fabric Agent) identity object IDs for role assignments
@@ -101,19 +112,59 @@ locals {
 # ========================================
 
 # Get current subscription
-data "azurerm_client_config" "current" {}
+data "azapi_client_config" "current" {}
 
-# Get resource group
-data "azurerm_resource_group" "this" {
-  name = var.resource_group_name
+# Create new resource group (if requested)
+resource "azapi_resource" "resource_group" {
+  count = local.create_new_resource_group ? 1 : 0
+
+  location  = var.location
+  name      = var.resource_group_name
+  parent_id = "/subscriptions/${data.azapi_client_config.current.subscription_id}"
+  type      = "Microsoft.Resources/resourceGroups@2021-04-01"
+  body = {
+    properties = {}
+  }
+  create_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers              = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  schema_validation_enabled = false
+  update_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 }
 
-# Get Azure Migrate Project (for all modes)
-data "azapi_resource" "migrate_project" {
-  count = var.project_name != null ? 1 : 0
+# Get existing resource group
+data "azapi_resource" "resource_group_existing" {
+  count = !local.create_new_resource_group ? 1 : 0
+
+  name      = var.resource_group_name
+  parent_id = "/subscriptions/${data.azapi_client_config.current.subscription_id}"
+  type      = "Microsoft.Resources/resourceGroups@2021-04-01"
+}
+
+# Create new Azure Migrate Project (if requested)
+resource "azapi_resource" "migrate_project" {
+  count = local.create_new_project ? 1 : 0
+
+  location  = var.location
+  name      = var.project_name
+  parent_id = local.resource_group_id
+  type      = "Microsoft.Migrate/migrateprojects@2020-05-01"
+  body = {
+    properties = {}
+  }
+  create_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers              = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  schema_validation_enabled = false
+  update_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+}
+
+# Get existing Azure Migrate Project (for all modes)
+data "azapi_resource" "migrate_project_existing" {
+  count = !local.create_new_project && var.project_name != null ? 1 : 0
 
   name      = var.project_name
-  parent_id = data.azurerm_resource_group.this.id
+  parent_id = local.resource_group_id
   type      = "Microsoft.Migrate/migrateprojects@2020-05-01"
 }
 
@@ -122,7 +173,7 @@ data "azapi_resource" "discovery_solution" {
   count = local.is_initialize_mode || local.is_replicate_mode ? 1 : 0
 
   name      = "Servers-Discovery-ServerDiscovery"
-  parent_id = data.azapi_resource.migrate_project[0].id
+  parent_id = local.migrate_project_id
   type      = "Microsoft.Migrate/migrateprojects/solutions@2020-05-01"
 }
 
@@ -131,7 +182,7 @@ data "azapi_resource" "replication_solution" {
   count = (local.is_initialize_mode || local.is_replicate_mode || local.is_list_mode || local.is_get_mode || local.is_jobs_mode) && var.project_name != null ? 1 : 0
 
   name                   = "Servers-Migration-ServerMigration_DataReplication"
-  parent_id              = data.azapi_resource.migrate_project[0].id
+  parent_id              = local.migrate_project_id
   type                   = "Microsoft.Migrate/migrateprojects/solutions@2020-05-01"
   response_export_values = ["*"]
 }
@@ -144,7 +195,7 @@ data "azapi_resource" "replication_solution" {
 data "azapi_resource_list" "discovered_servers" {
   count = local.is_discover_mode ? 1 : 0
 
-  parent_id = var.appliance_name != null ? "${data.azurerm_resource_group.this.id}/providers/Microsoft.OffAzure/${var.source_machine_type == "HyperV" ? "HyperVSites" : "VMwareSites"}/${var.appliance_name}" : data.azapi_resource.migrate_project[0].id
+  parent_id = var.appliance_name != null ? "${local.resource_group_id}/providers/Microsoft.OffAzure/${var.source_machine_type == "HyperV" ? "HyperVSites" : "VMwareSites"}/${var.appliance_name}" : local.migrate_project_id
   type      = var.appliance_name != null ? (var.source_machine_type == "HyperV" ? "Microsoft.OffAzure/HyperVSites/machines@2023-06-06" : "Microsoft.OffAzure/VMwareSites/machines@2023-06-06") : "Microsoft.Migrate/migrateprojects/machines@2020-05-01"
 }
 
@@ -156,9 +207,9 @@ data "azapi_resource_list" "discovered_servers" {
 resource "azapi_resource" "replication_vault" {
   count = local.create_new_vault ? 1 : 0
 
-  location  = data.azurerm_resource_group.this.location
+  location  = var.location
   name      = "${replace(var.project_name, "-", "")}replicationvault"
-  parent_id = data.azurerm_resource_group.this.id
+  parent_id = local.resource_group_id
   type      = "Microsoft.DataReplication/replicationVaults@2024-09-01"
   body = {
     properties = {}
@@ -188,7 +239,7 @@ data "azapi_resource" "replication_vault" {
 data "azapi_resource_list" "replication_fabrics" {
   count = local.is_initialize_mode ? 1 : 0
 
-  parent_id = data.azurerm_resource_group.this.id
+  parent_id = local.resource_group_id
   type      = "Microsoft.DataReplication/replicationFabrics@2024-09-01"
 
   depends_on = [azapi_resource.replication_vault]
@@ -245,48 +296,72 @@ resource "azapi_resource" "replication_policy" {
 }
 
 # Create cache storage account if not provided
-resource "azurerm_storage_account" "cache" {
+resource "azapi_resource" "cache_storage_account" {
   count = local.is_initialize_mode && var.cache_storage_account_id == null ? 1 : 0
 
-  account_replication_type         = "LRS"
-  account_tier                     = "Standard"
-  location                         = data.azurerm_resource_group.this.location
-  name                             = local.storage_account_name
-  resource_group_name              = data.azurerm_resource_group.this.name
-  account_kind                     = "StorageV2"
-  allow_nested_items_to_be_public  = false
-  cross_tenant_replication_enabled = true
-  min_tls_version                  = "TLS1_2"
+  location  = var.location
+  name      = local.storage_account_name
+  parent_id = local.resource_group_id
+  type      = "Microsoft.Storage/storageAccounts@2023-01-01"
+  body = {
+    kind = "StorageV2"
+    properties = {
+      allowBlobPublicAccess        = false
+      allowCrossTenantReplication  = true
+      minimumTlsVersion            = "TLS1_2"
+      supportsHttpsTrafficOnly     = true
+    }
+    sku = {
+      name = "Standard_LRS"
+    }
+  }
+  create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   tags = merge(var.tags, {
     "Migrate Project" = var.project_name
   })
+  update_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
-  blob_properties {
-    versioning_enabled = false
-  }
-  network_rules {
-    default_action = "Allow"
-  }
+  response_export_values = ["*"]
 }
 
 # Grant Contributor role to vault identity on storage account
-resource "azurerm_role_assignment" "vault_storage_contributor" {
+resource "azapi_resource" "vault_storage_contributor" {
   count = local.is_initialize_mode ? 1 : 0
 
-  principal_id                     = local.create_new_vault ? azapi_resource.replication_vault[0].identity[0].principal_id : data.azapi_resource.replication_vault[0].output.identity.principalId
-  scope                            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azurerm_storage_account.cache[0].id
-  role_definition_name             = "Contributor"
-  skip_service_principal_aad_check = true
+  name      = "${local.storage_account_name}-vault-contributor"
+  parent_id = var.cache_storage_account_id != null ? var.cache_storage_account_id : azapi_resource.cache_storage_account[0].id
+  type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
+  body = {
+    properties = {
+      principalId      = local.create_new_vault ? azapi_resource.replication_vault[0].identity[0].principal_id : data.azapi_resource.replication_vault[0].output.identity.principalId
+      roleDefinitionId = "/subscriptions/${data.azapi_client_config.current.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+      principalType    = "ServicePrincipal"
+    }
+  }
+  create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 }
 
 # Grant Storage Blob Data Contributor role to vault identity
-resource "azurerm_role_assignment" "vault_storage_blob_contributor" {
+resource "azapi_resource" "vault_storage_blob_contributor" {
   count = local.is_initialize_mode ? 1 : 0
 
-  principal_id                     = local.create_new_vault ? azapi_resource.replication_vault[0].identity[0].principal_id : data.azapi_resource.replication_vault[0].output.identity.principalId
-  scope                            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azurerm_storage_account.cache[0].id
-  role_definition_name             = "Storage Blob Data Contributor"
-  skip_service_principal_aad_check = true
+  name      = "${local.storage_account_name}-vault-blob-contributor"
+  parent_id = var.cache_storage_account_id != null ? var.cache_storage_account_id : azapi_resource.cache_storage_account[0].id
+  type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
+  body = {
+    properties = {
+      principalId      = local.create_new_vault ? azapi_resource.replication_vault[0].identity[0].principal_id : data.azapi_resource.replication_vault[0].output.identity.principalId
+      roleDefinitionId = "/subscriptions/${data.azapi_client_config.current.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+      principalType    = "ServicePrincipal"
+    }
+  }
+  create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 }
 
 # ========================================
@@ -300,49 +375,85 @@ resource "azurerm_role_assignment" "vault_storage_blob_contributor" {
 # ========================================
 
 # Grant Contributor role to source DRA identity
-resource "azurerm_role_assignment" "source_dra_storage_contributor" {
+resource "azapi_resource" "source_dra_storage_contributor" {
   count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
 
-  principal_id                     = local.source_dra_object_id
-  scope                            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azurerm_storage_account.cache[0].id
-  role_definition_name             = "Contributor"
-  skip_service_principal_aad_check = true
+  name      = "${local.storage_account_name}-source-dra-contributor"
+  parent_id = var.cache_storage_account_id != null ? var.cache_storage_account_id : azapi_resource.cache_storage_account[0].id
+  type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
+  body = {
+    properties = {
+      principalId      = local.source_dra_object_id
+      roleDefinitionId = "/subscriptions/${data.azapi_client_config.current.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+      principalType    = "ServicePrincipal"
+    }
+  }
+  create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
   depends_on = [data.azapi_resource_list.source_fabric_agents]
 }
 
 # Grant Storage Blob Data Contributor role to source DRA identity
-resource "azurerm_role_assignment" "source_dra_storage_blob_contributor" {
+resource "azapi_resource" "source_dra_storage_blob_contributor" {
   count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
 
-  principal_id                     = local.source_dra_object_id
-  scope                            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azurerm_storage_account.cache[0].id
-  role_definition_name             = "Storage Blob Data Contributor"
-  skip_service_principal_aad_check = true
+  name      = "${local.storage_account_name}-source-dra-blob"
+  parent_id = var.cache_storage_account_id != null ? var.cache_storage_account_id : azapi_resource.cache_storage_account[0].id
+  type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
+  body = {
+    properties = {
+      principalId      = local.source_dra_object_id
+      roleDefinitionId = "/subscriptions/${data.azapi_client_config.current.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+      principalType    = "ServicePrincipal"
+    }
+  }
+  create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
   depends_on = [data.azapi_resource_list.source_fabric_agents]
 }
 
 # Grant Contributor role to target DRA identity
-resource "azurerm_role_assignment" "target_dra_storage_contributor" {
+resource "azapi_resource" "target_dra_storage_contributor" {
   count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
 
-  principal_id                     = local.target_dra_object_id
-  scope                            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azurerm_storage_account.cache[0].id
-  role_definition_name             = "Contributor"
-  skip_service_principal_aad_check = true
+  name      = "${local.storage_account_name}-target-dra-contributor"
+  parent_id = var.cache_storage_account_id != null ? var.cache_storage_account_id : azapi_resource.cache_storage_account[0].id
+  type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
+  body = {
+    properties = {
+      principalId      = local.target_dra_object_id
+      roleDefinitionId = "/subscriptions/${data.azapi_client_config.current.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+      principalType    = "ServicePrincipal"
+    }
+  }
+  create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
   depends_on = [data.azapi_resource_list.target_fabric_agents]
 }
 
 # Grant Storage Blob Data Contributor role to target DRA identity
-resource "azurerm_role_assignment" "target_dra_storage_blob_contributor" {
+resource "azapi_resource" "target_dra_storage_blob_contributor" {
   count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
 
-  principal_id                     = local.target_dra_object_id
-  scope                            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azurerm_storage_account.cache[0].id
-  role_definition_name             = "Storage Blob Data Contributor"
-  skip_service_principal_aad_check = true
+  name      = "${local.storage_account_name}-target-dra-blob"
+  parent_id = var.cache_storage_account_id != null ? var.cache_storage_account_id : azapi_resource.cache_storage_account[0].id
+  type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
+  body = {
+    properties = {
+      principalId      = local.target_dra_object_id
+      roleDefinitionId = "/subscriptions/${data.azapi_client_config.current.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+      principalType    = "ServicePrincipal"
+    }
+  }
+  create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
   depends_on = [data.azapi_resource_list.target_fabric_agents]
 }
@@ -354,12 +465,12 @@ resource "time_sleep" "wait_for_role_propagation" {
   create_duration = "120s"
 
   depends_on = [
-    azurerm_role_assignment.vault_storage_contributor,
-    azurerm_role_assignment.vault_storage_blob_contributor,
-    azurerm_role_assignment.source_dra_storage_contributor,
-    azurerm_role_assignment.source_dra_storage_blob_contributor,
-    azurerm_role_assignment.target_dra_storage_contributor,
-    azurerm_role_assignment.target_dra_storage_blob_contributor
+    azapi_resource.vault_storage_contributor,
+    azapi_resource.vault_storage_blob_contributor,
+    azapi_resource.source_dra_storage_contributor,
+    azapi_resource.source_dra_storage_blob_contributor,
+    azapi_resource.target_dra_storage_contributor,
+    azapi_resource.target_dra_storage_blob_contributor
   ]
 }
 
@@ -375,7 +486,7 @@ resource "azapi_update_resource" "update_solution_storage" {
         extendedDetails = merge(
           try(data.azapi_resource.replication_solution[0].output.properties.details.extendedDetails, {}),
           {
-            replicationStorageAccountId = var.cache_storage_account_id != null ? var.cache_storage_account_id : azurerm_storage_account.cache[0].id
+            replicationStorageAccountId = var.cache_storage_account_id != null ? var.cache_storage_account_id : azapi_resource.cache_storage_account[0].id
             vaultId                     = local.create_new_vault ? azapi_resource.replication_vault[0].id : data.azapi_resource.replication_vault[0].id
           }
         )
@@ -426,13 +537,13 @@ resource "azapi_resource" "replication_extension" {
     properties = {
       customProperties = var.instance_type == "VMwareToAzStackHCI" ? {
         azStackHciFabricArmId       = local.resolved_target_fabric_id
-        storageAccountId            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azurerm_storage_account.cache[0].id
+        storageAccountId            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azapi_resource.cache_storage_account[0].id
         storageAccountSasSecretName = null
         instanceType                = var.instance_type
         vmwareFabricArmId           = local.resolved_source_fabric_id
         } : {
         azStackHciFabricArmId       = local.resolved_target_fabric_id
-        storageAccountId            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azurerm_storage_account.cache[0].id
+        storageAccountId            = var.cache_storage_account_id != null ? var.cache_storage_account_id : azapi_resource.cache_storage_account[0].id
         storageAccountSasSecretName = null
         instanceType                = var.instance_type
         hyperVFabricArmId           = local.resolved_source_fabric_id
@@ -497,8 +608,8 @@ resource "azapi_resource" "protected_item" {
       customProperties = {
         instanceType                     = var.instance_type
         targetArcClusterCustomLocationId = var.custom_location_id
-        customLocationRegion             = coalesce(var.location, data.azurerm_resource_group.this.location)
-        fabricDiscoveryMachineId         = var.machine_id != null ? var.machine_id : "${data.azapi_resource.migrate_project[0].id}/machines/${var.machine_name}"
+        customLocationRegion             = var.location
+        fabricDiscoveryMachineId         = var.machine_id != null ? var.machine_id : "${local.migrate_project_id}/machines/${var.machine_name}"
         disksToInclude = length(var.disks_to_include) > 0 ? [
           for disk in var.disks_to_include : {
             diskId                 = disk.disk_id
@@ -751,25 +862,40 @@ resource "azapi_resource_action" "remove_replication" {
 # AVM REQUIRED INTERFACES
 # ========================================
 
-resource "azurerm_management_lock" "this" {
+resource "azapi_resource" "management_lock" {
   count = var.lock != null ? 1 : 0
 
-  lock_level = var.lock.kind
-  name       = coalesce(var.lock.name, "lock-${var.lock.kind}")
-  scope      = data.azurerm_resource_group.this.id
-  notes      = var.lock.kind == "CanNotDelete" ? "Cannot delete the resource or its child resources." : "Cannot delete or modify the resource or its child resources."
+  name      = coalesce(var.lock.name, "lock-${var.lock.kind}")
+  parent_id = local.resource_group_id
+  type      = "Microsoft.Authorization/locks@2020-05-01"
+  body = {
+    properties = {
+      level = var.lock.kind
+      notes = var.lock.kind == "CanNotDelete" ? "Cannot delete the resource or its child resources." : "Cannot delete or modify the resource or its child resources."
+    }
+  }
+  create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 }
 
-resource "azurerm_role_assignment" "this" {
+resource "azapi_resource" "role_assignment" {
   for_each = var.role_assignments
 
-  principal_id                           = each.value.principal_id
-  scope                                  = data.azurerm_resource_group.this.id
-  condition                              = each.value.condition
-  condition_version                      = each.value.condition_version
-  delegated_managed_identity_resource_id = each.value.delegated_managed_identity_resource_id
-  principal_type                         = each.value.principal_type
-  role_definition_id                     = strcontains(lower(each.value.role_definition_id_or_name), lower(local.role_definition_resource_substring)) ? each.value.role_definition_id_or_name : null
-  role_definition_name                   = strcontains(lower(each.value.role_definition_id_or_name), lower(local.role_definition_resource_substring)) ? null : each.value.role_definition_id_or_name
-  skip_service_principal_aad_check       = each.value.skip_service_principal_aad_check
+  name      = "role-${each.key}"
+  parent_id = local.resource_group_id
+  type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
+  body = {
+    properties = {
+      principalId                        = each.value.principal_id
+      roleDefinitionId                   = strcontains(lower(each.value.role_definition_id_or_name), lower(local.role_definition_resource_substring)) ? each.value.role_definition_id_or_name : "/subscriptions/${data.azapi_client_config.current.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/${each.value.role_definition_id_or_name}"
+      principalType                      = each.value.principal_type
+      condition                          = each.value.condition
+      conditionVersion                   = each.value.condition_version
+      delegatedManagedIdentityResourceId = each.value.delegated_managed_identity_resource_id
+    }
+  }
+  create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 }

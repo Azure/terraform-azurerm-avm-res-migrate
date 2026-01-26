@@ -9,6 +9,12 @@ variable "instance_type" {
   description = "The migration instance type (VMwareToAzStackHCI or HyperVToAzStackHCI)"
 }
 
+variable "location" {
+  type        = string
+  default     = null
+  description = "Optional: The Azure region. If not specified, uses the resource group's location."
+}
+
 variable "project_name" {
   type        = string
   default     = "my-migrate-project"
