@@ -3,50 +3,19 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-# ========================================
-# DISCOVERY COMMAND OUTPUTS
-# ========================================
-
-# ========================================
-# INITIALIZE INFRASTRUCTURE OUTPUTS
-# ========================================
-
-# ========================================
-# CREATE REPLICATION OUTPUTS
-# ========================================
-
-# ========================================
-# GENERAL OUTPUTS
-# ========================================
-
-# ========================================
-# JOBS COMMAND OUTPUTS
-# ========================================
-
-# ========================================
-# COMMAND 5: REMOVE REPLICATION OUTPUTS
-# ========================================
-
-# ========================================
-# GET PROTECTED ITEM OUTPUTS
-# ========================================
-
-# ========================================
-# LIST PROTECTED ITEMS OUTPUTS
-# ========================================
-
-# ========================================
-# MIGRATE (PLANNED FAILOVER) OUTPUTS
-# ========================================
+output "migrate_project_id" {
+  description = "The resource ID of the Azure Migrate project (created or existing)"
+  value       = local.migrate_project_id
+}
 
 output "cache_storage_account_id" {
   description = "ID of the cache storage account"
-  value       = local.is_initialize_mode ? (var.cache_storage_account_id != null ? var.cache_storage_account_id : (length(azurerm_storage_account.cache) > 0 ? azurerm_storage_account.cache[0].id : null)) : null
+  value       = local.is_initialize_mode ? (var.cache_storage_account_id != null ? var.cache_storage_account_id : (length(azapi_resource.cache_storage_account) > 0 ? azapi_resource.cache_storage_account[0].id : null)) : null
 }
 
 output "cache_storage_account_name" {
   description = "Name of the cache storage account"
-  value       = local.is_initialize_mode && length(azurerm_storage_account.cache) > 0 ? azurerm_storage_account.cache[0].name : null
+  value       = local.is_initialize_mode && length(azapi_resource.cache_storage_account) > 0 ? azapi_resource.cache_storage_account[0].name : null
 }
 
 # Debug output - data source length

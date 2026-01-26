@@ -11,26 +11,20 @@ variable "instance_type" {
 
 variable "location" {
   type        = string
-  default     = null
-  description = "Optional: The Azure region. If not specified, uses the resource group's location."
+  default     = "eastus"
+  description = "The Azure region where the Migrate project will be created"
 }
 
 variable "project_name" {
   type        = string
-  default     = "my-migrate-project"
-  description = "The name of the Azure Migrate project"
-}
-
-variable "replication_vault_id" {
-  type        = string
-  default     = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-migrate-project-rg/providers/Microsoft.DataReplication/replicationVaults/myprojectreplicationvault"
-  description = "The full resource ID of the replication vault (optional, derived from project if not provided)"
+  default     = "my-new-migrate-project"
+  description = "The name of the new Azure Migrate project to create"
 }
 
 variable "resource_group_name" {
   type        = string
   default     = "my-migrate-project-rg"
-  description = "The name of the resource group containing the Azure Migrate project"
+  description = "The name of the resource group where the Migrate project will be created"
 }
 
 variable "subscription_id" {
@@ -42,8 +36,9 @@ variable "subscription_id" {
 variable "tags" {
   type = map(string)
   default = {
-    Environment = "Test"
-    Purpose     = "ReplicationJobs"
+    Environment = "Production"
+    Purpose     = "MigrateProject"
+    ManagedBy   = "Terraform"
   }
-  description = "Tags to apply to resources"
+  description = "Tags to apply to the Azure Migrate project"
 }

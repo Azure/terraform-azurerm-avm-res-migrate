@@ -15,15 +15,10 @@ terraform {
       source  = "azure/azapi"
       version = ">= 1.9, < 3.0"
     }
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">= 3.71, < 5.0"
-    }
   }
 }
 
-provider "azurerm" {
-  features {}
+provider "azapi" {
   subscription_id = var.subscription_id
 }
 
@@ -34,6 +29,7 @@ module "migrate_vm" {
   name                = "vm-migration"
   resource_group_name = var.resource_group_name
   instance_type       = var.instance_type
+  location            = var.location
   operation_mode      = "migrate"
   protected_item_id   = var.protected_item_id
   shutdown_source_vm  = var.shutdown_source_vm

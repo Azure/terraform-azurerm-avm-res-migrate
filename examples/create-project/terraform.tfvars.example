@@ -1,0 +1,20 @@
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
+
+# Example terraform.tfvars for creating a new Azure Migrate project
+# Copy this file to terraform.tfvars and update with your values
+
+subscription_id      = "00000000-0000-0000-0000-000000000000"
+resource_group_name  = "my-migrate-project-rg"
+project_name         = "my-new-migrate-project"
+location             = "eastus"
+instance_type        = "VMwareToAzStackHCI"
+
+tags = {
+  Environment = "Production"
+  Purpose     = "MigrateProject"
+  ManagedBy   = "Terraform"
+  CostCenter  = "IT-Infrastructure"
+}

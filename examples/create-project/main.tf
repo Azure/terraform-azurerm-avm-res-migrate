@@ -3,8 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 #
-# Example: Get Protected Item Details
-# This example demonstrates how to retrieve details of a protected (replicating) VM
+# Example: Create New Azure Migrate Project
+# This example demonstrates how to create a new Azure Migrate project
 #
 
 terraform {
@@ -22,23 +22,16 @@ provider "azapi" {
   subscription_id = var.subscription_id
 }
 
-# Get protected item details
-module "get_protected_item" {
+# Create a new Azure Migrate project
+module "create_migrate_project" {
   source = "../../"
 
-  name                = "get-protected-item"
-  resource_group_name = var.resource_group_name
-  instance_type       = var.instance_type
-  location            = var.location
-  operation_mode      = "get"
-  project_name        = var.project_name
-  # Get by ID
-  protected_item_id = var.protected_item_id
-  tags              = var.tags
+  name                   = "create-project"
+  resource_group_name    = var.resource_group_name
+  instance_type          = var.instance_type
+  operation_mode         = "discover"
+  project_name           = var.project_name
+  create_migrate_project = true # Set to true to create new project
+  location               = var.location
+  tags                   = var.tags
 }
-
-
-
-
-
-

@@ -42,6 +42,12 @@ variable "crash_consistent_frequency_minutes" {
   description = "Crash consistent snapshot frequency in minutes"
 }
 
+variable "create_migrate_project" {
+  type        = bool
+  default     = false
+  description = "Whether to create a new Azure Migrate project. If false, an existing project is queried."
+}
+
 variable "custom_location_id" {
   type        = string
   default     = null
