@@ -32,7 +32,7 @@ locals {
     ][0],
     null
   ) : null
-  # Auto-discover target fabric from appliance name (matches CLI behavior)
+  # Auto-discover target fabric from appliance name
   discovered_target_fabric = local.is_initialize_mode && var.target_appliance_name != null && var.target_fabric_id == null && length(data.azapi_resource_list.replication_fabrics) > 0 ? try(
     [for fabric in data.azapi_resource_list.replication_fabrics[0].output.value :
       fabric if(
@@ -313,6 +313,9 @@ data "azapi_resource" "replication_solution" {
   response_export_values = ["*"]
 }
 
+# ========================================
+#  GET DISCOVERED SERVERS
+# ========================================
 
 # Query discovered servers from VMware or HyperV sites
 data "azapi_resource_list" "discovered_servers" {
@@ -369,7 +372,6 @@ data "azapi_resource_list" "replication_fabrics" {
 }
 
 # Query source fabric agents (DRAs) for role assignments
-# CLI: get_fabric_agent() retrieves agents from {fabric}/fabricAgents endpoint
 # Note: Uses has_fabric_inputs since resolved_fabric_id is computed at apply time
 data "azapi_resource_list" "source_fabric_agents" {
   count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
@@ -489,12 +491,10 @@ resource "azapi_resource" "vault_storage_blob_contributor" {
 
 # ========================================
 # DRA (Fabric Agent) Role Assignments
-# CLI: grant_storage_permissions() grants both Contributor and Storage Blob Data Contributor
-#      to source_dra, target_dra, and vault identity
 # Note: These use has_fabric_inputs for count (known at plan time) and rely on
 #       depends_on to ensure DRA data is available before the role assignment.
 #       If DRA lookup fails, the principal_id will be null and Terraform will error,
-#       which is the expected behavior (matching CLI's error for disconnected appliances).
+#       which is the expected behavior.
 # ========================================
 
 # Grant Contributor role to source DRA identity
@@ -581,7 +581,7 @@ resource "azapi_resource" "target_dra_storage_blob_contributor" {
   depends_on = [data.azapi_resource_list.target_fabric_agents]
 }
 
-# Wait for role assignments to propagate (CLI waits 120 seconds after grant_storage_permissions)
+# Wait for role assignments to propagate
 resource "time_sleep" "wait_for_role_propagation" {
   count = local.is_initialize_mode ? 1 : 0
 
@@ -625,7 +625,7 @@ resource "azapi_update_resource" "update_solution_storage" {
   ]
 }
 
-# Wait for AMH solution update to propagate (CLI waits 60 seconds after update_amh_solution_storage)
+# Wait for AMH solution update to propagate
 resource "time_sleep" "wait_for_solution_update" {
   count = local.is_initialize_mode ? 1 : 0
 
@@ -637,7 +637,6 @@ resource "time_sleep" "wait_for_solution_update" {
 }
 
 # Wait for all prerequisites to be ready before creating extension
-# This matches the CLI behavior which waits 30 seconds after verify_extension_prerequisites
 resource "time_sleep" "wait_for_solution_sync" {
   count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
 
@@ -687,7 +686,7 @@ resource "azapi_resource" "replication_extension" {
   update_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
   timeouts {
-    create = "10m" # CLI waits up to 10 minutes (20 x 30s polling intervals)
+    create = "10m"
     delete = "5m"
     read   = "2m"
   }
