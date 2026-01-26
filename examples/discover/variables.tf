@@ -17,8 +17,8 @@ variable "location" {
 
 variable "project_name" {
   type        = string
-  description = "The name of the Azure Migrate project"
   default     = "my-migrate-project"
+  description = "The name of the Azure Migrate project"
 }
 
 variable "resource_group_name" {

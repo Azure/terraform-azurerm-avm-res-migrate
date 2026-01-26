@@ -95,7 +95,7 @@ Description: The name of the Azure Migrate project (used to auto-discover vault)
 
 Type: `string`
 
-Default: `"saif-project-120126"`
+Default: `"my-migrate-project"`
 
 ### <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name)
 
@@ -103,7 +103,7 @@ Description: The name of the resource group containing the Azure Migrate project
 
 Type: `string`
 
-Default: `"saif-project-120126-rg"`
+Default: `"my-migrate-project-rg"`
 
 ### <a name="input_subscription_id"></a> [subscription\_id](#input\_subscription\_id)
 
@@ -111,7 +111,7 @@ Description: The Azure subscription ID where resources will be deployed
 
 Type: `string`
 
-Default: `"f6f66a94-f184-45da-ac12-ffbfd8a6eb29"`
+Default: `"00000000-0000-0000-0000-000000000000"`
 
 ### <a name="input_tags"></a> [tags](#input\_tags)
 

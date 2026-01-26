@@ -131,7 +131,7 @@ Description: The name of the Azure Migrate project
 
 Type: `string`
 
-Default: `"saif-project-011326"`
+Default: `"my-migrate-project"`
 
 ### <a name="input_recovery_point_history_minutes"></a> [recovery\_point\_history\_minutes](#input\_recovery\_point\_history\_minutes)
 
@@ -147,7 +147,7 @@ Description: The name of the resource group containing the Azure Migrate project
 
 Type: `string`
 
-Default: `"saif-project-011326-rg"`
+Default: `"my-migrate-project-rg"`
 
 ### <a name="input_source_appliance_name"></a> [source\_appliance\_name](#input\_source\_appliance\_name)
 
@@ -171,7 +171,7 @@ Description: The Azure subscription ID where resources will be deployed
 
 Type: `string`
 
-Default: `"de3c4d5e-af08-451a-a873-438d86ab6f4b"`
+Default: `"00000000-0000-0000-0000-000000000000"`
 
 ### <a name="input_tags"></a> [tags](#input\_tags)
 
