@@ -11,7 +11,7 @@ variable "instance_type" {
 
 variable "location" {
   type        = string
-  default     = "westus2"
+  default     = "eastus"
   description = "Optional: The Azure region. If not specified, uses the resource group's location."
 }
 
