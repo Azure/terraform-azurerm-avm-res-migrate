@@ -36,6 +36,8 @@ module "initialize_replication" {
   crash_consistent_frequency_minutes = var.crash_consistent_frequency_minutes
   # Instance type (VMware to HCI or HyperV to HCI)
   instance_type = var.instance_type
+  # Location for resources
+  location = var.location
   # Operation mode
   operation_mode = "initialize"
   # Migration project

@@ -1,0 +1,3 @@
+# This example requires an existing protected item (replication) to remove.
+# It cannot run independently in automated end-to-end testing.
+# It should be tested as part of a full workflow: initialize → replicate → remove.

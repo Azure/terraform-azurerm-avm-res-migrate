@@ -455,7 +455,7 @@ resource "azapi_resource" "cache_storage_account" {
 resource "azapi_resource" "vault_storage_contributor" {
   count = local.is_initialize_mode ? 1 : 0
 
-  name      = "${local.storage_account_name}-vault-contributor"
+  name      = uuidv5("dns", "${local.storage_account_name}-vault-contributor")
   parent_id = var.cache_storage_account_id != null ? var.cache_storage_account_id : azapi_resource.cache_storage_account[0].id
   type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
   body = {
@@ -474,7 +474,7 @@ resource "azapi_resource" "vault_storage_contributor" {
 resource "azapi_resource" "vault_storage_blob_contributor" {
   count = local.is_initialize_mode ? 1 : 0
 
-  name      = "${local.storage_account_name}-vault-blob-contributor"
+  name      = uuidv5("dns", "${local.storage_account_name}-vault-blob-contributor")
   parent_id = var.cache_storage_account_id != null ? var.cache_storage_account_id : azapi_resource.cache_storage_account[0].id
   type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
   body = {
@@ -501,7 +501,7 @@ resource "azapi_resource" "vault_storage_blob_contributor" {
 resource "azapi_resource" "source_dra_storage_contributor" {
   count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
 
-  name      = "${local.storage_account_name}-source-dra-contributor"
+  name      = uuidv5("dns", "${local.storage_account_name}-source-dra-contributor")
   parent_id = var.cache_storage_account_id != null ? var.cache_storage_account_id : azapi_resource.cache_storage_account[0].id
   type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
   body = {
@@ -522,7 +522,7 @@ resource "azapi_resource" "source_dra_storage_contributor" {
 resource "azapi_resource" "source_dra_storage_blob_contributor" {
   count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
 
-  name      = "${local.storage_account_name}-source-dra-blob"
+  name      = uuidv5("dns", "${local.storage_account_name}-source-dra-blob")
   parent_id = var.cache_storage_account_id != null ? var.cache_storage_account_id : azapi_resource.cache_storage_account[0].id
   type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
   body = {
@@ -543,7 +543,7 @@ resource "azapi_resource" "source_dra_storage_blob_contributor" {
 resource "azapi_resource" "target_dra_storage_contributor" {
   count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
 
-  name      = "${local.storage_account_name}-target-dra-contributor"
+  name      = uuidv5("dns", "${local.storage_account_name}-target-dra-contributor")
   parent_id = var.cache_storage_account_id != null ? var.cache_storage_account_id : azapi_resource.cache_storage_account[0].id
   type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
   body = {
@@ -564,7 +564,7 @@ resource "azapi_resource" "target_dra_storage_contributor" {
 resource "azapi_resource" "target_dra_storage_blob_contributor" {
   count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
 
-  name      = "${local.storage_account_name}-target-dra-blob"
+  name      = uuidv5("dns", "${local.storage_account_name}-target-dra-blob")
   parent_id = var.cache_storage_account_id != null ? var.cache_storage_account_id : azapi_resource.cache_storage_account[0].id
   type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
   body = {
@@ -716,10 +716,31 @@ data "azapi_resource" "discovered_machine" {
   type        = contains(split("/", lower(var.machine_id)), "migrateprojects") ? "Microsoft.Migrate/migrateprojects/machines@2020-05-01" : (contains(split("/", lower(var.machine_id)), "hypervsites") ? "Microsoft.OffAzure/HyperVSites/machines@2023-06-06" : "Microsoft.OffAzure/VMwareSites/machines@2023-06-06")
 }
 
+# Create target resource group if it doesn't exist (for replicate mode)
+resource "azapi_resource" "target_resource_group" {
+  count = local.is_replicate_mode && var.target_resource_group_id != null ? 1 : 0
+
+  name      = basename(var.target_resource_group_id)
+  parent_id = "/subscriptions/${split("/", var.target_resource_group_id)[2]}"
+  type      = "Microsoft.Resources/resourceGroups@2021-04-01"
+  location  = coalesce(var.location, "westus2")
+  tags = merge(var.tags, {
+    "Migrate Project" = var.project_name
+  })
+
+  lifecycle {
+    ignore_changes = [tags, location]
+  }
+}
+
 # Create protected item (VM replication)
+# IMPORTANT: The protected item name must be the source machine name (last segment of machine_id),
+# NOT the target VM name. The targetVmName goes inside customProperties.
 resource "azapi_resource" "protected_item" {
   count = local.is_replicate_mode && (var.machine_id != null || var.machine_name != null) ? 1 : 0
 
+  # Protected item name must be the source machine name from machine_id (e.g., "100-69-177-104-36bf83bc-c03b-4c08-853c-187db9aa17e8_50232086-5a0d-7205-68e2-bc2391e7a0a7")
+  # This matches the CLI behavior in create_protected_item() which uses machine_name
   name      = var.machine_name != null ? var.machine_name : basename(var.machine_id)
   parent_id = var.replication_vault_id
   type      = "Microsoft.DataReplication/replicationVaults/protectedItems@2024-09-01"
@@ -729,9 +750,11 @@ resource "azapi_resource" "protected_item" {
       replicationExtensionName = var.replication_extension_name
       customProperties = {
         instanceType                     = var.instance_type
-        targetArcClusterCustomLocationId = var.custom_location_id
+        targetArcClusterCustomLocationId = coalesce(var.custom_location_id, "")
         customLocationRegion             = var.location
         fabricDiscoveryMachineId         = var.machine_id != null ? var.machine_id : "${local.migrate_project_id}/machines/${var.machine_name}"
+        # Power user mode: Use explicit disks_to_include
+        # Default user mode: Create single OS disk entry using os_disk_id
         disksToInclude = length(var.disks_to_include) > 0 ? [
           for disk in var.disks_to_include : {
             diskId                 = disk.disk_id
@@ -743,29 +766,37 @@ resource "azapi_resource" "protected_item" {
           }
           ] : var.os_disk_id != null ? [{
             diskId                 = var.os_disk_id
-            diskSizeGB             = 60
+            diskSizeGB             = var.os_disk_size_gb
             diskFileFormat         = "VHDX"
             isOsDisk               = true
             isDynamic              = true
             diskPhysicalSectorSize = 512
         }] : []
-        targetVmName            = var.target_vm_name
-        targetResourceGroupId   = var.target_resource_group_id
-        storageContainerId      = var.target_storage_path_id
-        hyperVGeneration        = var.hyperv_generation
-        targetCpuCores          = var.target_vm_cpu_cores
-        sourceCpuCores          = var.source_vm_cpu_cores
-        isDynamicRam            = var.is_dynamic_memory_enabled
+        targetVmName          = var.target_vm_name
+        targetResourceGroupId = var.target_resource_group_id
+        storageContainerId    = var.target_storage_path_id
+        hyperVGeneration      = var.hyperv_generation
+        targetCpuCores        = var.target_vm_cpu_cores
+        sourceCpuCores        = var.source_vm_cpu_cores
+        isDynamicRam          = var.is_dynamic_memory_enabled
+        # CLI uses float for source, int for target memory
         sourceMemoryInMegaBytes = tonumber(var.source_vm_ram_mb)
-        targetMemoryInMegaBytes = tonumber(var.target_vm_ram_mb)
-        nicsToInclude = [
+        targetMemoryInMegaBytes = floor(tonumber(var.target_vm_ram_mb))
+        # Power user mode: Use explicit nics_to_include
+        # Default user mode: Create single NIC entry using nic_id and target_virtual_switch_id
+        nicsToInclude = length(var.nics_to_include) > 0 ? [
           for nic in var.nics_to_include : {
             nicId                    = nic.nic_id
             selectionTypeForFailover = nic.selection_type
             targetNetworkId          = nic.target_network_id
-            testNetworkId            = nic.test_network_id != null ? nic.test_network_id : ""
+            testNetworkId            = nic.test_network_id != null ? nic.test_network_id : nic.target_network_id
           }
-        ]
+          ] : (var.nic_id != null && var.target_virtual_switch_id != null) ? [{
+            nicId                    = var.nic_id
+            selectionTypeForFailover = "SelectedByUser"
+            targetNetworkId          = var.target_virtual_switch_id
+            testNetworkId            = var.target_test_virtual_switch_id != null ? var.target_test_virtual_switch_id : var.target_virtual_switch_id
+        }] : []
         dynamicMemoryConfig = {
           maximumMemoryInMegaBytes     = 1048576
           minimumMemoryInMegaBytes     = 512
@@ -792,6 +823,8 @@ resource "azapi_resource" "protected_item" {
     read   = "10m"
     update = "5m"
   }
+
+  depends_on = [azapi_resource.target_resource_group]
 
   lifecycle {
     ignore_changes = [

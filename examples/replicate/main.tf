@@ -6,6 +6,18 @@
 # Example: Create VM Replication
 # This example demonstrates how to create replication for a VM to Azure Stack HCI
 #
+# There are two modes for configuring disks and NICs:
+#
+# 1. POWER USER MODE (recommended for full control):
+#    - Provide disks_to_include: list of all disks with their IDs, sizes, and OS disk flag
+#    - Provide nics_to_include: list of NICs with network mappings
+#
+# 2. DEFAULT USER MODE (simpler, single disk/NIC):
+#    - Provide os_disk_id, os_disk_size_gb for the OS disk
+#    - Provide nic_id, target_virtual_switch_id for the NIC
+#
+# This example uses POWER USER MODE with explicit disk and NIC configurations.
+#
 
 terraform {
   required_version = ">= 1.5"
@@ -22,20 +34,24 @@ provider "azapi" {
   subscription_id = var.subscription_id
 }
 
-# Create replication for a specific VM
+# Create replication for a specific VM (POWER USER MODE)
 module "replicate_vm" {
   source = "../../"
 
   name                       = "vm-replication"
   resource_group_name        = var.resource_group_name
   custom_location_id         = var.custom_location_id
+  disks_to_include           = var.disks_to_include
   hyperv_generation          = var.hyperv_generation
   instance_type              = var.instance_type
   is_dynamic_memory_enabled  = var.is_dynamic_memory_enabled
   location                   = var.location
   machine_id                 = var.machine_id
+  nic_id                     = var.nic_id # For default user mode
+  nics_to_include            = var.nics_to_include
   operation_mode             = "replicate"
   os_disk_id                 = var.os_disk_id
+  os_disk_size_gb            = var.os_disk_size_gb # For default user mode
   policy_name                = var.policy_name
   project_name               = var.project_name
   replication_extension_name = var.replication_extension_name
