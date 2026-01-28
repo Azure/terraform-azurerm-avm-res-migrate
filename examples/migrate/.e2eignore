@@ -1,0 +1,8 @@
+# This example requires external dependencies that cannot be created/destroyed atomically:
+# - Existing Azure Migrate project with registered appliances
+# - An active replication (protected item) in a healthy state
+# - Source VM that can be shut down during migration
+# - Target Azure Stack HCI cluster ready to receive the migrated VM
+#
+# Migration is a destructive operation that moves VMs from source to target,
+# making this example unsuitable for automated e2e testing.

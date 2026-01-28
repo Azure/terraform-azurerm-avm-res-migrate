@@ -286,10 +286,27 @@ variable "operation_mode" {
   }
 }
 
+variable "nic_id" {
+  type        = string
+  default     = null
+  description = "NIC ID for the source server (default user mode). Used when nics_to_include is not provided but target_virtual_switch_id is specified."
+}
+
 variable "os_disk_id" {
   type        = string
   default     = null
   description = "Operating system disk ID for the source server (default user mode)"
+}
+
+variable "os_disk_size_gb" {
+  type        = number
+  default     = 60
+  description = "OS disk size in GB for default user mode. Used when disks_to_include is not provided."
+
+  validation {
+    condition     = var.os_disk_size_gb == null || var.os_disk_size_gb >= 1
+    error_message = "os_disk_size_gb must be at least 1 GB."
+  }
 }
 
 variable "policy_name" {

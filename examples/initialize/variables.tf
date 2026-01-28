@@ -23,13 +23,13 @@ variable "instance_type" {
 
 variable "location" {
   type        = string
-  default     = null
+  default     = "westus2"
   description = "Optional: The Azure region where resources will be deployed. If not specified, uses the resource group's location."
 }
 
 variable "project_name" {
   type        = string
-  default     = "my-migrate-project"
+  default     = "saif-project-012726"
   description = "The name of the Azure Migrate project"
 }
 
@@ -41,7 +41,7 @@ variable "recovery_point_history_minutes" {
 
 variable "resource_group_name" {
   type        = string
-  default     = "my-migrate-project-rg"
+  default     = "saif-project-012726-rg"
   description = "The name of the resource group containing the Azure Migrate project"
 }
 
@@ -59,7 +59,7 @@ variable "source_fabric_id" {
 
 variable "subscription_id" {
   type        = string
-  default     = "00000000-0000-0000-0000-000000000000"
+  default     = "f6f66a94-f184-45da-ac12-ffbfd8a6eb29"
   description = "The Azure subscription ID where resources will be deployed"
 }
 

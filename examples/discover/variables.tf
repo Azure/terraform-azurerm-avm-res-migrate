@@ -11,19 +11,19 @@ variable "instance_type" {
 
 variable "location" {
   type        = string
-  default     = null
+  default     = "westus2"
   description = "Optional: The Azure region. If not specified, uses the resource group's location."
 }
 
 variable "project_name" {
   type        = string
-  default     = "saif-project-012626"
+  default     = "saif-project-012726"
   description = "The name of the Azure Migrate project"
 }
 
 variable "resource_group_name" {
   type        = string
-  default     = "saif-project-012626-rg"
+  default     = "saif-project-012726-rg"
   description = "The name of the resource group containing the Azure Migrate project"
 }
 
