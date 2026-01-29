@@ -22,15 +22,10 @@ terraform {
       source  = "azure/azapi"
       version = ">= 1.9, < 3.0"
     }
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">= 3.71, < 5.0"
-    }
   }
 }
 
-provider "azurerm" {
-  features {}
+provider "azapi" {
   subscription_id = var.subscription_id
 }
 
@@ -41,6 +36,7 @@ module "get_protected_item" {
   name                = "get-protected-item"
   resource_group_name = var.resource_group_name
   instance_type       = var.instance_type
+  location            = var.location
   operation_mode      = "get"
   project_name        = var.project_name
   # Get by ID
@@ -64,8 +60,6 @@ The following requirements are needed by this module:
 
 - <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (>= 1.9, < 3.0)
 
-- <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) (>= 3.71, < 5.0)
-
 ## Resources
 
 No resources.
@@ -87,13 +81,21 @@ Type: `string`
 
 Default: `"VMwareToAzStackHCI"`
 
+### <a name="input_location"></a> [location](#input\_location)
+
+Description: Optional: The Azure region. If not specified, uses the resource group's location.
+
+Type: `string`
+
+Default: `"eastus"`
+
 ### <a name="input_project_name"></a> [project\_name](#input\_project\_name)
 
 Description: The name of the Azure Migrate project
 
 Type: `string`
 
-Default: `"my-migrate-project"`
+Default: `"saif-project-012726"`
 
 ### <a name="input_protected_item_id"></a> [protected\_item\_id](#input\_protected\_item\_id)
 
@@ -101,7 +103,7 @@ Description: The full resource ID of the protected item to retrieve
 
 Type: `string`
 
-Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-migrate-project-rg/providers/Microsoft.DataReplication/replicationVaults/myprojectreplicationvault/protectedItems/my-vm-name"`
+Default: `"/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-012726-rg/providers/Microsoft.DataReplication/replicationVaults/saif-project-01424replicationvault/protectedItems/100-69-177-104-36bf83bc-c03b-4c08-853c-187db9aa17e8_50232086-5a0d-7205-68e2-bc2391e7a0a7"`
 
 ### <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name)
 
@@ -109,7 +111,7 @@ Description: The name of the resource group containing the Azure Migrate project
 
 Type: `string`
 
-Default: `"my-migrate-project-rg"`
+Default: `"saif-project-012726-rg"`
 
 ### <a name="input_subscription_id"></a> [subscription\_id](#input\_subscription\_id)
 
@@ -117,7 +119,7 @@ Description: The Azure subscription ID where resources will be deployed
 
 Type: `string`
 
-Default: `"00000000-0000-0000-0000-000000000000"`
+Default: `"f6f66a94-f184-45da-ac12-ffbfd8a6eb29"`
 
 ### <a name="input_tags"></a> [tags](#input\_tags)
 

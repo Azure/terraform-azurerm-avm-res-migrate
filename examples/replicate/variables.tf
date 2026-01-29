@@ -74,6 +74,13 @@ variable "machine_id" {
   description = "The full resource ID of the machine to replicate (OffAzure/VMwareSites path)"
 }
 
+# Default user mode variables (alternative to nics_to_include)
+variable "nic_id" {
+  type        = string
+  default     = null # Set to a NIC ID like "4000" to use DEFAULT USER MODE
+  description = "NIC ID for DEFAULT USER MODE. Used when nics_to_include is not provided but target_virtual_switch_id is specified."
+}
+
 variable "nics_to_include" {
   type = list(object({
     nic_id            = string
@@ -90,13 +97,6 @@ variable "nics_to_include" {
     }
   ]
   description = "NICs to include for replication (from machine properties). Use this for POWER USER MODE."
-}
-
-# Default user mode variables (alternative to nics_to_include)
-variable "nic_id" {
-  type        = string
-  default     = null # Set to a NIC ID like "4000" to use DEFAULT USER MODE
-  description = "NIC ID for DEFAULT USER MODE. Used when nics_to_include is not provided but target_virtual_switch_id is specified."
 }
 
 variable "os_disk_id" {
