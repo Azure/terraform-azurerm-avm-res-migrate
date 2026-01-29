@@ -10,10 +10,10 @@
 # ========================================
 
 locals {
-  # Create new resource group if requested
-  create_new_resource_group = var.create_resource_group
   # Create new Migrate project if project_name is provided but create_migrate_project is true
   create_new_project = var.create_migrate_project && var.project_name != null
+  # Create new resource group if requested
+  create_new_resource_group = var.create_resource_group
   # Only create new vault if in initialize mode and vault doesn't exist
   create_new_vault = local.is_initialize_mode && !local.vault_exists_in_solution
   # Auto-discover source fabric from appliance name
@@ -60,16 +60,16 @@ locals {
   is_migrate_mode        = var.operation_mode == "migrate"
   is_remove_mode         = var.operation_mode == "remove"
   is_replicate_mode      = var.operation_mode == "replicate"
+  # Resolved Migrate project ID (created or existing)
+  migrate_project_id = local.create_new_project ? azapi_resource.migrate_project[0].id : (
+    length(data.azapi_resource.migrate_project_existing) > 0 ? data.azapi_resource.migrate_project_existing[0].id : null
+  )
   # Resolve fabric IDs: priority order is explicit ID > auto-discovered from appliance name
   resolved_source_fabric_id = var.source_fabric_id != null ? var.source_fabric_id : (
     local.discovered_source_fabric != null ? try(local.discovered_source_fabric.id, null) : null
   )
   resolved_target_fabric_id = var.target_fabric_id != null ? var.target_fabric_id : (
     local.discovered_target_fabric != null ? try(local.discovered_target_fabric.id, null) : null
-  )
-  # Resolved Migrate project ID (created or existing)
-  migrate_project_id = local.create_new_project ? azapi_resource.migrate_project[0].id : (
-    length(data.azapi_resource.migrate_project_existing) > 0 ? data.azapi_resource.migrate_project_existing[0].id : null
   )
   # Resolved resource group (created or existing)
   resource_group_id = local.create_new_resource_group ? azapi_resource.resource_group[0].id : data.azapi_resource.resource_group_existing[0].id
@@ -281,6 +281,7 @@ resource "azapi_resource" "migrate_project_role_assignment" {
   create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  update_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
   depends_on = [azapi_resource.solution_data_replication]
 }
@@ -440,15 +441,14 @@ resource "azapi_resource" "cache_storage_account" {
       name = "Standard_LRS"
     }
   }
-  create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-  delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-  read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  create_headers         = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers         = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers           = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  response_export_values = ["*"]
   tags = merge(var.tags, {
     "Migrate Project" = var.project_name
   })
   update_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-
-  response_export_values = ["*"]
 }
 
 # Grant Contributor role to vault identity on storage account
@@ -468,6 +468,7 @@ resource "azapi_resource" "vault_storage_contributor" {
   create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  update_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 }
 
 # Grant Storage Blob Data Contributor role to vault identity
@@ -487,6 +488,7 @@ resource "azapi_resource" "vault_storage_blob_contributor" {
   create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  update_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 }
 
 # ========================================
@@ -514,6 +516,7 @@ resource "azapi_resource" "source_dra_storage_contributor" {
   create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  update_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
   depends_on = [data.azapi_resource_list.source_fabric_agents]
 }
@@ -535,6 +538,7 @@ resource "azapi_resource" "source_dra_storage_blob_contributor" {
   create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  update_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
   depends_on = [data.azapi_resource_list.source_fabric_agents]
 }
@@ -556,6 +560,7 @@ resource "azapi_resource" "target_dra_storage_contributor" {
   create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  update_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
   depends_on = [data.azapi_resource_list.target_fabric_agents]
 }
@@ -577,6 +582,7 @@ resource "azapi_resource" "target_dra_storage_blob_contributor" {
   create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  update_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
   depends_on = [data.azapi_resource_list.target_fabric_agents]
 }
@@ -720,13 +726,17 @@ data "azapi_resource" "discovered_machine" {
 resource "azapi_resource" "target_resource_group" {
   count = local.is_replicate_mode && var.target_resource_group_id != null ? 1 : 0
 
-  name      = basename(var.target_resource_group_id)
-  parent_id = "/subscriptions/${split("/", var.target_resource_group_id)[2]}"
-  type      = "Microsoft.Resources/resourceGroups@2021-04-01"
-  location  = coalesce(var.location, "westus2")
+  location       = coalesce(var.location, "westus2")
+  name           = basename(var.target_resource_group_id)
+  parent_id      = "/subscriptions/${split("/", var.target_resource_group_id)[2]}"
+  type           = "Microsoft.Resources/resourceGroups@2021-04-01"
+  create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   tags = merge(var.tags, {
     "Migrate Project" = var.project_name
   })
+  update_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
   lifecycle {
     ignore_changes = [tags, location]
@@ -1032,6 +1042,7 @@ resource "azapi_resource" "management_lock" {
   create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  update_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 }
 
 resource "azapi_resource" "role_assignment" {
@@ -1053,4 +1064,5 @@ resource "azapi_resource" "role_assignment" {
   create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  update_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 }

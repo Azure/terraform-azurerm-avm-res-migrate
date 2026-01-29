@@ -13,8 +13,6 @@ The following requirements are needed by this module:
 
 - <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (~> 2.4)
 
-- <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) (~> 4.0)
-
 - <a name="requirement_modtm"></a> [modtm](#requirement\_modtm) (~> 0.3)
 
 - <a name="requirement_random"></a> [random](#requirement\_random) (~> 3.5)
@@ -25,32 +23,41 @@ The following requirements are needed by this module:
 
 The following resources are used by this module:
 
+- [azapi_resource.cache_storage_account](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.management_lock](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.migrate_project](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.migrate_project_role_assignment](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [azapi_resource.protected_item](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [azapi_resource.replication_extension](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [azapi_resource.replication_policy](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [azapi_resource.replication_vault](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.resource_group](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.role_assignment](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.solution_assessment](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.solution_data_replication](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.solution_discovery](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.solution_migration](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.source_dra_storage_blob_contributor](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.source_dra_storage_contributor](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.target_dra_storage_blob_contributor](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.target_dra_storage_contributor](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.target_resource_group](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.vault_storage_blob_contributor](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.vault_storage_contributor](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [azapi_resource_action.planned_failover_hyperv](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource_action) (resource)
 - [azapi_resource_action.planned_failover_vmware](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource_action) (resource)
 - [azapi_resource_action.remove_replication](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource_action) (resource)
 - [azapi_update_resource.update_solution_storage](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/update_resource) (resource)
-- [azurerm_management_lock.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/management_lock) (resource)
-- [azurerm_role_assignment.source_dra_storage_blob_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) (resource)
-- [azurerm_role_assignment.source_dra_storage_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) (resource)
-- [azurerm_role_assignment.target_dra_storage_blob_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) (resource)
-- [azurerm_role_assignment.target_dra_storage_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) (resource)
-- [azurerm_role_assignment.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) (resource)
-- [azurerm_role_assignment.vault_storage_blob_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) (resource)
-- [azurerm_role_assignment.vault_storage_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) (resource)
-- [azurerm_storage_account.cache](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account) (resource)
 - [modtm_telemetry.telemetry](https://registry.terraform.io/providers/azure/modtm/latest/docs/resources/telemetry) (resource)
 - [random_uuid.telemetry](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) (resource)
 - [time_sleep.wait_for_role_propagation](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) (resource)
 - [time_sleep.wait_for_solution_sync](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) (resource)
 - [time_sleep.wait_for_solution_update](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) (resource)
+- [azapi_client_config.current](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/client_config) (data source)
 - [azapi_client_config.telemetry](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/client_config) (data source)
 - [azapi_resource.discovered_machine](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
 - [azapi_resource.discovery_solution](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
-- [azapi_resource.migrate_project](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
+- [azapi_resource.migrate_project_existing](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
 - [azapi_resource.protected_item_by_id](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
 - [azapi_resource.protected_item_by_name](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
 - [azapi_resource.protected_item_to_migrate](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
@@ -58,6 +65,7 @@ The following resources are used by this module:
 - [azapi_resource.replication_job](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
 - [azapi_resource.replication_solution](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
 - [azapi_resource.replication_vault](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
+- [azapi_resource.resource_group_existing](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
 - [azapi_resource.vault_for_get](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
 - [azapi_resource.vault_for_jobs](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
 - [azapi_resource.vault_for_list](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
@@ -67,8 +75,6 @@ The following resources are used by this module:
 - [azapi_resource_list.replication_jobs](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource_list) (data source)
 - [azapi_resource_list.source_fabric_agents](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource_list) (data source)
 - [azapi_resource_list.target_fabric_agents](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource_list) (data source)
-- [azurerm_client_config.current](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/client_config) (data source)
-- [azurerm_resource_group.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/resource_group) (data source)
 - [modtm_module_source.telemetry](https://registry.terraform.io/providers/azure/modtm/latest/docs/data-sources/module_source) (data source)
 
 <!-- markdownlint-disable MD013 -->
@@ -123,6 +129,22 @@ Description: Crash consistent snapshot frequency in minutes
 Type: `number`
 
 Default: `60`
+
+### <a name="input_create_migrate_project"></a> [create\_migrate\_project](#input\_create\_migrate\_project)
+
+Description: Whether to create a new Azure Migrate project. If false, an existing project is queried.
+
+Type: `bool`
+
+Default: `false`
+
+### <a name="input_create_resource_group"></a> [create\_resource\_group](#input\_create\_resource\_group)
+
+Description: Whether to create a new resource group. If false, an existing resource group is queried. When true, location must be specified.
+
+Type: `bool`
+
+Default: `false`
 
 ### <a name="input_custom_location_id"></a> [custom\_location\_id](#input\_custom\_location\_id)
 
@@ -268,7 +290,7 @@ Default: `null`
 
 ### <a name="input_location"></a> [location](#input\_location)
 
-Description: Azure region where the resource should be deployed. If not specified, the resource group's location will be used.
+Description: Azure region where resources should be deployed. Required when create\_resource\_group or create\_migrate\_project is true.
 
 Type: `string`
 
@@ -334,6 +356,14 @@ object({
 
 Default: `{}`
 
+### <a name="input_nic_id"></a> [nic\_id](#input\_nic\_id)
+
+Description: NIC ID for the source server (default user mode). Used when nics\_to\_include is not provided but target\_virtual\_switch\_id is specified.
+
+Type: `string`
+
+Default: `null`
+
 ### <a name="input_nics_to_include"></a> [nics\_to\_include](#input\_nics\_to\_include)
 
 Description: NICs to include for replication (power user mode)
@@ -353,7 +383,7 @@ Default: `[]`
 
 ### <a name="input_operation_mode"></a> [operation\_mode](#input\_operation\_mode)
 
-Description: The migration operation to perform: discover, initialize, replicate, jobs, remove, get, list, or migrate
+Description: The migration operation to perform: create-project, discover, initialize, replicate, jobs, remove, get, list, or migrate
 
 Type: `string`
 
@@ -366,6 +396,14 @@ Description: Operating system disk ID for the source server (default user mode)
 Type: `string`
 
 Default: `null`
+
+### <a name="input_os_disk_size_gb"></a> [os\_disk\_size\_gb](#input\_os\_disk\_size\_gb)
+
+Description: OS disk size in GB for default user mode. Used when disks\_to\_include is not provided.
+
+Type: `number`
+
+Default: `60`
 
 ### <a name="input_policy_name"></a> [policy\_name](#input\_policy\_name)
 
@@ -635,22 +673,6 @@ Description: ID of the cache storage account
 
 Description: Name of the cache storage account
 
-### <a name="output_debug_data_source_length"></a> [debug\_data\_source\_length](#output\_debug\_data\_source\_length)
-
-Description: Length of discovered\_servers data source
-
-### <a name="output_debug_is_discover_mode"></a> [debug\_is\_discover\_mode](#output\_debug\_is\_discover\_mode)
-
-Description: Is discover mode active
-
-### <a name="output_debug_parsed_servers"></a> [debug\_parsed\_servers](#output\_debug\_parsed\_servers)
-
-Description: Parsed servers for debugging
-
-### <a name="output_debug_raw_discovered_servers"></a> [debug\_raw\_discovered\_servers](#output\_debug\_raw\_discovered\_servers)
-
-Description: Raw API response for debugging
-
 ### <a name="output_discovered_servers"></a> [discovered\_servers](#output\_discovered\_servers)
 
 Description: List of discovered servers from Azure Migrate (filtered: index, machine\_name, ip\_addresses, operating\_system, boot\_type, os\_disk\_id)
@@ -658,6 +680,10 @@ Description: List of discovered servers from Azure Migrate (filtered: index, mac
 ### <a name="output_discovered_servers_count"></a> [discovered\_servers\_count](#output\_discovered\_servers\_count)
 
 Description: Total number of discovered servers with discovery data
+
+### <a name="output_discovered_servers_raw"></a> [discovered\_servers\_raw](#output\_discovered\_servers\_raw)
+
+Description: Raw API response for discovered servers (for debugging)
 
 ### <a name="output_location_output"></a> [location\_output](#output\_location\_output)
 
@@ -669,7 +695,7 @@ Description: Machine ID being replicated
 
 ### <a name="output_migrate_project_id"></a> [migrate\_project\_id](#output\_migrate\_project\_id)
 
-Description: Azure Migrate project ID
+Description: The resource ID of the Azure Migrate project (created or existing)
 
 ### <a name="output_migration_operation_details"></a> [migration\_operation\_details](#output\_migration\_operation\_details)
 

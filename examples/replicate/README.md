@@ -4,6 +4,73 @@
 
 This example demonstrates how to configure VM replication using the `replicate` operation mode.
 
+## Prerequisites
+
+Before running this example, you need to have:
+1. An existing Azure Migrate project with discovery completed
+2. Replication infrastructure initialized (see `initialize` example)
+3. Target Azure Stack HCI cluster configured
+
+## Finding Required Values
+
+### VMware Site Name and Run-As Account
+
+```bash
+# List VMware sites in your resource group
+az rest --method GET \
+  --uri "https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.OffAzure/VMwareSites?api-version=2023-06-06" \
+  --query "value[].name" -o tsv
+
+# List run-as accounts for a VMware site
+az rest --method GET \
+  --uri "https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.OffAzure/VMwareSites/{site_name}/runasaccounts?api-version=2023-06-06" \
+  -o json
+```
+
+### Replication Vault, Policy, and Extension Names
+
+These are created during the `initialize` operation. You can find them from the solution:
+
+```bash
+# Get the replication solution details (contains vaultId)
+az rest --method GET \
+  --uri "https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/migrateprojects/{project_name}/solutions/Servers-Migration-ServerMigration_DataReplication?api-version=2020-06-01-preview" \
+  -o json
+
+# List replication policies in the vault
+az rest --method GET \
+  --uri "https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DataReplication/replicationVaults/{vault_name}/replicationPolicies?api-version=2024-09-01" \
+  -o json
+
+# List replication extensions in the vault
+az rest --method GET \
+  --uri "https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DataReplication/replicationVaults/{vault_name}/replicationExtensions?api-version=2024-09-01" \
+  -o json
+```
+
+### Fabric Agent (DRA) Names
+
+```bash
+# List replication fabrics
+az rest --method GET \
+  --uri "https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DataReplication/replicationFabrics?api-version=2024-09-01" \
+  -o json
+
+# List fabric agents for a specific fabric
+az rest --method GET \
+  --uri "https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DataReplication/replicationFabrics/{fabric_name}/fabricAgents?api-version=2024-09-01" \
+  -o json
+```
+
+### Discovered Machines
+
+```bash
+# List discovered machines from VMware site
+az rest --method GET \
+  --uri "https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.OffAzure/VMwareSites/{site_name}/machines?api-version=2023-06-06" \
+  -o json
+```
+
 ```hcl
 # --------------------------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
@@ -12,6 +79,18 @@ This example demonstrates how to configure VM replication using the `replicate` 
 #
 # Example: Create VM Replication
 # This example demonstrates how to create replication for a VM to Azure Stack HCI
+#
+# There are two modes for configuring disks and NICs:
+#
+# 1. POWER USER MODE (recommended for full control):
+#    - Provide disks_to_include: list of all disks with their IDs, sizes, and OS disk flag
+#    - Provide nics_to_include: list of NICs with network mappings
+#
+# 2. DEFAULT USER MODE (simpler, single disk/NIC):
+#    - Provide os_disk_id, os_disk_size_gb for the OS disk
+#    - Provide nic_id, target_virtual_switch_id for the NIC
+#
+# This example uses POWER USER MODE with explicit disk and NIC configurations.
 #
 
 terraform {
@@ -22,32 +101,31 @@ terraform {
       source  = "azure/azapi"
       version = ">= 1.9, < 3.0"
     }
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">= 3.71, < 5.0"
-    }
   }
 }
 
-provider "azurerm" {
-  features {}
+provider "azapi" {
   subscription_id = var.subscription_id
 }
 
-# Create replication for a specific VM
+# Create replication for a specific VM (POWER USER MODE)
 module "replicate_vm" {
   source = "../../"
 
   name                       = "vm-replication"
   resource_group_name        = var.resource_group_name
   custom_location_id         = var.custom_location_id
+  disks_to_include           = var.disks_to_include
   hyperv_generation          = var.hyperv_generation
   instance_type              = var.instance_type
   is_dynamic_memory_enabled  = var.is_dynamic_memory_enabled
   location                   = var.location
   machine_id                 = var.machine_id
+  nic_id                     = var.nic_id # For default user mode
+  nics_to_include            = var.nics_to_include
   operation_mode             = "replicate"
   os_disk_id                 = var.os_disk_id
+  os_disk_size_gb            = var.os_disk_size_gb # For default user mode
   policy_name                = var.policy_name
   project_name               = var.project_name
   replication_extension_name = var.replication_extension_name
@@ -82,8 +160,6 @@ The following requirements are needed by this module:
 
 - <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (>= 1.9, < 3.0)
 
-- <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) (>= 3.71, < 5.0)
-
 ## Resources
 
 No resources.
@@ -103,7 +179,7 @@ Description: The full resource ID of the Azure Stack HCI custom location
 
 Type: `string`
 
-Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-hci-rg/providers/Microsoft.ExtendedLocation/customLocations/my-custom-location"`
+Default: `"/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/EDGECI-REGISTRATION-rr1n25r1606-i3dfqVNA/providers/Microsoft.ExtendedLocation/customLocations/n25r1606-cl-customLocation"`
 
 ### <a name="input_disks_to_include"></a> [disks\_to\_include](#input\_disks\_to\_include)
 
@@ -122,7 +198,33 @@ list(object({
   }))
 ```
 
-Default: `[]`
+Default:
+
+```json
+[
+  {
+    "disk_file_format": "VHDX",
+    "disk_id": "6000C29f-59f4-37d9-acdd-8f90d99d07e0",
+    "disk_size_gb": 40,
+    "is_dynamic": true,
+    "is_os_disk": true
+  },
+  {
+    "disk_file_format": "VHDX",
+    "disk_id": "6000C295-9144-b82d-a8fc-9c0e27fe3b41",
+    "disk_size_gb": 10,
+    "is_dynamic": true,
+    "is_os_disk": false
+  },
+  {
+    "disk_file_format": "VHDX",
+    "disk_id": "6000C29b-4a7e-0e87-e286-74b13f11055b",
+    "disk_size_gb": 10,
+    "is_dynamic": true,
+    "is_os_disk": false
+  }
+]
+```
 
 ### <a name="input_hyperv_generation"></a> [hyperv\_generation](#input\_hyperv\_generation)
 
@@ -130,7 +232,7 @@ Description: Hyper-V generation (1 or 2)
 
 Type: `string`
 
-Default: `"2"`
+Default: `"1"`
 
 ### <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type)
 
@@ -150,11 +252,11 @@ Default: `false`
 
 ### <a name="input_location"></a> [location](#input\_location)
 
-Description: Optional: The Azure region (custom location region). If not specified, uses the resource group's location.
+Description: The Azure region (custom location region). Must be a region where Microsoft.AzureStackHCI resources are available.
 
 Type: `string`
 
-Default: `null`
+Default: `"eastus"`
 
 ### <a name="input_machine_id"></a> [machine\_id](#input\_machine\_id)
 
@@ -162,11 +264,19 @@ Description: The full resource ID of the machine to replicate (OffAzure/VMwareSi
 
 Type: `string`
 
-Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-migrate-project-rg/providers/Microsoft.Migrate/MigrateProjects/my-migrate-project/Machines/00000000-0000-0000-0000-000000000000"`
+Default: `"/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-012726-rg/providers/Microsoft.OffAzure/VMwareSites/src7681site/machines/100-69-177-104-36bf83bc-c03b-4c08-853c-187db9aa17e8_50232086-5a0d-7205-68e2-bc2391e7a0a7"`
+
+### <a name="input_nic_id"></a> [nic\_id](#input\_nic\_id)
+
+Description: NIC ID for DEFAULT USER MODE. Used when nics\_to\_include is not provided but target\_virtual\_switch\_id is specified.
+
+Type: `string`
+
+Default: `null`
 
 ### <a name="input_nics_to_include"></a> [nics\_to\_include](#input\_nics\_to\_include)
 
-Description: NICs to include for replication (from machine properties)
+Description: NICs to include for replication (from machine properties). Use this for POWER USER MODE.
 
 Type:
 
@@ -179,15 +289,34 @@ list(object({
   }))
 ```
 
-Default: `[]`
+Default:
+
+```json
+[
+  {
+    "nic_id": "4000",
+    "selection_type": "SelectedByUser",
+    "target_network_id": "/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/EDGECI-REGISTRATION-rr1n25r1606-i3dfqVNA/providers/Microsoft.AzureStackHCI/logicalnetworks/lnet-n25r1606-cl",
+    "test_network_id": "/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/EDGECI-REGISTRATION-rr1n25r1606-i3dfqVNA/providers/Microsoft.AzureStackHCI/logicalnetworks/lnet-n25r1606-cl"
+  }
+]
+```
 
 ### <a name="input_os_disk_id"></a> [os\_disk\_id](#input\_os\_disk\_id)
 
-Description: The OS disk ID of the source VM
+Description: The OS disk ID of the source VM. Used for DEFAULT USER MODE when disks\_to\_include is not provided.
 
 Type: `string`
 
-Default: `"00000000-0000-0000-0000-000000000000"`
+Default: `"6000C29f-59f4-37d9-acdd-8f90d99d07e0"`
+
+### <a name="input_os_disk_size_gb"></a> [os\_disk\_size\_gb](#input\_os\_disk\_size\_gb)
+
+Description: The OS disk size in GB for DEFAULT USER MODE. Used when disks\_to\_include is not provided.
+
+Type: `number`
+
+Default: `40`
 
 ### <a name="input_policy_name"></a> [policy\_name](#input\_policy\_name)
 
@@ -195,7 +324,7 @@ Description: The name of the replication policy
 
 Type: `string`
 
-Default: `"myprojectreplicationvaultVMwareToAzStackHCIpolicy"`
+Default: `"saif-project-01424replicationvaultVMwareToAzStackHCIpolicy"`
 
 ### <a name="input_project_name"></a> [project\_name](#input\_project\_name)
 
@@ -203,7 +332,7 @@ Description: The name of the Azure Migrate project
 
 Type: `string`
 
-Default: `"my-migrate-project"`
+Default: `"saif-project-012726"`
 
 ### <a name="input_replication_extension_name"></a> [replication\_extension\_name](#input\_replication\_extension\_name)
 
@@ -211,7 +340,7 @@ Description: The name of the replication extension
 
 Type: `string`
 
-Default: `"srcreplicationfabric-tgtreplicationfabric-MigReplicationExtn"`
+Default: `"srcc048replicationfabric-tgt7945replicationfabric-MigReplicationExtn"`
 
 ### <a name="input_replication_vault_id"></a> [replication\_vault\_id](#input\_replication\_vault\_id)
 
@@ -219,7 +348,7 @@ Description: The full resource ID of the replication vault
 
 Type: `string`
 
-Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-migrate-project-rg/providers/Microsoft.DataReplication/replicationVaults/myprojectreplicationvault"`
+Default: `"/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-012726-rg/providers/Microsoft.DataReplication/replicationVaults/saif-project-01424replicationvault"`
 
 ### <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name)
 
@@ -227,7 +356,7 @@ Description: The name of the resource group containing the Azure Migrate project
 
 Type: `string`
 
-Default: `"my-migrate-project-rg"`
+Default: `"saif-project-012726-rg"`
 
 ### <a name="input_run_as_account_id"></a> [run\_as\_account\_id](#input\_run\_as\_account\_id)
 
@@ -235,7 +364,7 @@ Description: The full resource ID of the run as account (from vCenter)
 
 Type: `string`
 
-Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-migrate-project-rg/providers/Microsoft.OffAzure/VMwareSites/my-vmware-site/runasaccounts/00000000-0000-0000-0000-000000000000"`
+Default: `"/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-012726-rg/providers/Microsoft.OffAzure/VMwareSites/src7681site/runasaccounts/58093f44-117a-561b-be13-d751e1b22ca9"`
 
 ### <a name="input_source_appliance_name"></a> [source\_appliance\_name](#input\_source\_appliance\_name)
 
@@ -251,7 +380,7 @@ Description: The name of the source fabric DRA
 
 Type: `string`
 
-Default: `"srcdra"`
+Default: `"srcc048dra"`
 
 ### <a name="input_source_vm_cpu_cores"></a> [source\_vm\_cpu\_cores](#input\_source\_vm\_cpu\_cores)
 
@@ -259,7 +388,7 @@ Description: Number of CPU cores in the source VM
 
 Type: `number`
 
-Default: `4`
+Default: `2`
 
 ### <a name="input_source_vm_ram_mb"></a> [source\_vm\_ram\_mb](#input\_source\_vm\_ram\_mb)
 
@@ -267,7 +396,7 @@ Description: Amount of RAM in MB in the source VM
 
 Type: `number`
 
-Default: `8192`
+Default: `4096`
 
 ### <a name="input_subscription_id"></a> [subscription\_id](#input\_subscription\_id)
 
@@ -275,7 +404,7 @@ Description: The Azure subscription ID where resources will be deployed
 
 Type: `string`
 
-Default: `"00000000-0000-0000-0000-000000000000"`
+Default: `"f6f66a94-f184-45da-ac12-ffbfd8a6eb29"`
 
 ### <a name="input_tags"></a> [tags](#input\_tags)
 
@@ -307,7 +436,7 @@ Description: The name of the target fabric DRA
 
 Type: `string`
 
-Default: `"tgtdra"`
+Default: `"tgt7945dra"`
 
 ### <a name="input_target_hci_cluster_id"></a> [target\_hci\_cluster\_id](#input\_target\_hci\_cluster\_id)
 
@@ -315,7 +444,7 @@ Description: The full resource ID of the target Azure Stack HCI cluster
 
 Type: `string`
 
-Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-hci-rg/providers/Microsoft.AzureStackHCI/clusters/my-hci-cluster"`
+Default: `"/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/EDGECI-REGISTRATION-rr1n25r1606-i3dfqVNA/providers/Microsoft.AzureStackHCI/clusters/n25r1606-cl"`
 
 ### <a name="input_target_resource_group_id"></a> [target\_resource\_group\_id](#input\_target\_resource\_group\_id)
 
@@ -323,7 +452,7 @@ Description: The full resource ID of the target resource group
 
 Type: `string`
 
-Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-target-rg"`
+Default: `"/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/saif-project-012726-rg"`
 
 ### <a name="input_target_storage_path_id"></a> [target\_storage\_path\_id](#input\_target\_storage\_path\_id)
 
@@ -331,7 +460,7 @@ Description: The full resource ID of the target storage path
 
 Type: `string`
 
-Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-hci-rg/providers/Microsoft.AzureStackHCI/storageContainers/my-storage-container"`
+Default: `"/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/EDGECI-REGISTRATION-rr1n25r1606-i3dfqVNA/providers/Microsoft.AzureStackHCI/storageContainers/UserStorage1-bd705ded518141ff99bbefb30642e19f"`
 
 ### <a name="input_target_virtual_switch_id"></a> [target\_virtual\_switch\_id](#input\_target\_virtual\_switch\_id)
 
@@ -339,7 +468,7 @@ Description: The full resource ID of the target virtual switch/network
 
 Type: `string`
 
-Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-hci-rg/providers/Microsoft.AzureStackHCI/logicalnetworks/my-logical-network"`
+Default: `"/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/EDGECI-REGISTRATION-rr1n25r1606-i3dfqVNA/providers/Microsoft.AzureStackHCI/logicalnetworks/lnet-n25r1606-cl"`
 
 ### <a name="input_target_vm_cpu_cores"></a> [target\_vm\_cpu\_cores](#input\_target\_vm\_cpu\_cores)
 
@@ -347,7 +476,7 @@ Description: Number of CPU cores for the target VM
 
 Type: `number`
 
-Default: `4`
+Default: `2`
 
 ### <a name="input_target_vm_name"></a> [target\_vm\_name](#input\_target\_vm\_name)
 
@@ -355,7 +484,7 @@ Description: The name for the migrated VM on Azure Stack HCI
 
 Type: `string`
 
-Default: `"MigratedVmTerraform"`
+Default: `"test-vm9-Migrated"`
 
 ### <a name="input_target_vm_ram_mb"></a> [target\_vm\_ram\_mb](#input\_target\_vm\_ram\_mb)
 
@@ -363,7 +492,7 @@ Description: Amount of RAM in MB for the target VM
 
 Type: `number`
 
-Default: `8192`
+Default: `4096`
 
 ## Outputs
 
