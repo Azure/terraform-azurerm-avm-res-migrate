@@ -22,15 +22,10 @@ terraform {
       source  = "azure/azapi"
       version = ">= 1.9, < 3.0"
     }
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">= 3.71, < 5.0"
-    }
   }
 }
 
-provider "azurerm" {
-  features {}
+provider "azapi" {
   subscription_id = var.subscription_id
 }
 
@@ -41,6 +36,7 @@ module "migrate_vm" {
   name                = "vm-migration"
   resource_group_name = var.resource_group_name
   instance_type       = var.instance_type
+  location            = var.location
   operation_mode      = "migrate"
   protected_item_id   = var.protected_item_id
   shutdown_source_vm  = var.shutdown_source_vm
@@ -56,8 +52,6 @@ The following requirements are needed by this module:
 - <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1.5)
 
 - <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (>= 1.9, < 3.0)
-
-- <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) (>= 3.71, < 5.0)
 
 ## Resources
 
@@ -79,6 +73,14 @@ Description: The migration instance type (VMwareToAzStackHCI or HyperVToAzStackH
 Type: `string`
 
 Default: `"VMwareToAzStackHCI"`
+
+### <a name="input_location"></a> [location](#input\_location)
+
+Description: Optional: The Azure region. If not specified, uses the resource group's location.
+
+Type: `string`
+
+Default: `null`
 
 ### <a name="input_protected_item_id"></a> [protected\_item\_id](#input\_protected\_item\_id)
 

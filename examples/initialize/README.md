@@ -23,15 +23,10 @@ terraform {
       source  = "azure/azapi"
       version = ">= 1.9, < 3.0"
     }
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">= 3.71, < 5.0"
-    }
   }
 }
 
-provider "azurerm" {
-  features {}
+provider "azapi" {
   subscription_id = var.subscription_id
 }
 
@@ -48,6 +43,8 @@ module "initialize_replication" {
   crash_consistent_frequency_minutes = var.crash_consistent_frequency_minutes
   # Instance type (VMware to HCI or HyperV to HCI)
   instance_type = var.instance_type
+  # Location for resources
+  location = var.location
   # Operation mode
   operation_mode = "initialize"
   # Migration project
@@ -77,8 +74,6 @@ The following requirements are needed by this module:
 - <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1.5)
 
 - <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (>= 1.9, < 3.0)
-
-- <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) (>= 3.71, < 5.0)
 
 ## Resources
 
@@ -123,7 +118,7 @@ Description: Optional: The Azure region where resources will be deployed. If not
 
 Type: `string`
 
-Default: `null`
+Default: `"westus2"`
 
 ### <a name="input_project_name"></a> [project\_name](#input\_project\_name)
 
@@ -131,7 +126,7 @@ Description: The name of the Azure Migrate project
 
 Type: `string`
 
-Default: `"my-migrate-project"`
+Default: `"saif-project-012726"`
 
 ### <a name="input_recovery_point_history_minutes"></a> [recovery\_point\_history\_minutes](#input\_recovery\_point\_history\_minutes)
 
@@ -147,7 +142,7 @@ Description: The name of the resource group containing the Azure Migrate project
 
 Type: `string`
 
-Default: `"my-migrate-project-rg"`
+Default: `"saif-project-012726-rg"`
 
 ### <a name="input_source_appliance_name"></a> [source\_appliance\_name](#input\_source\_appliance\_name)
 
@@ -171,7 +166,7 @@ Description: The Azure subscription ID where resources will be deployed
 
 Type: `string`
 
-Default: `"00000000-0000-0000-0000-000000000000"`
+Default: `"f6f66a94-f184-45da-ac12-ffbfd8a6eb29"`
 
 ### <a name="input_tags"></a> [tags](#input\_tags)
 

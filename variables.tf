@@ -261,6 +261,12 @@ DESCRIPTION
   nullable    = false
 }
 
+variable "nic_id" {
+  type        = string
+  default     = null
+  description = "NIC ID for the source server (default user mode). Used when nics_to_include is not provided but target_virtual_switch_id is specified."
+}
+
 variable "nics_to_include" {
   type = list(object({
     nic_id            = string
@@ -289,12 +295,6 @@ variable "operation_mode" {
     condition     = contains(["create-project", "discover", "initialize", "replicate", "jobs", "remove", "get", "list", "migrate"], var.operation_mode)
     error_message = "operation_mode must be one of: create-project, discover, initialize, replicate, jobs, remove, get, list, migrate."
   }
-}
-
-variable "nic_id" {
-  type        = string
-  default     = null
-  description = "NIC ID for the source server (default user mode). Used when nics_to_include is not provided but target_virtual_switch_id is specified."
 }
 
 variable "os_disk_id" {
