@@ -43,7 +43,6 @@ mock_provider "azapi" {
 
 mock_provider "modtm" {}
 mock_provider "random" {}
-mock_provider "time" {}
 
 # ========================================
 # DEFAULT VARIABLES FOR ALL TESTS

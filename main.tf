@@ -381,23 +381,8 @@ resource "azapi_resource" "target_dra_storage_blob_contributor" {
   depends_on = [data.azapi_resource_list.target_fabric_agents]
 }
 
-# Wait for role assignments to propagate
-resource "time_sleep" "wait_for_role_propagation" {
-  count = local.is_initialize_mode ? 1 : 0
-
-  create_duration = "120s"
-
-  depends_on = [
-    azapi_resource.vault_storage_contributor,
-    azapi_resource.vault_storage_blob_contributor,
-    azapi_resource.source_dra_storage_contributor,
-    azapi_resource.source_dra_storage_blob_contributor,
-    azapi_resource.target_dra_storage_contributor,
-    azapi_resource.target_dra_storage_blob_contributor
-  ]
-}
-
 # Update AMH solution with storage account ID and vault ID
+# Uses retry instead of time_sleep to handle eventual consistency for RBAC propagation
 resource "azapi_update_resource" "update_solution_storage" {
   count = local.is_initialize_mode ? 1 : 0
 
@@ -419,32 +404,25 @@ resource "azapi_update_resource" "update_solution_storage" {
   read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   update_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
+  # Retry on authorization/propagation errors instead of using time_sleep
+  retry = {
+    error_message_regex  = ["AuthorizationFailed", "PrincipalNotFound", "does not have authorization", "RoleAssignmentNotFound", "InternalServerError", "RetryableError"]
+    interval_seconds     = 15
+    max_interval_seconds = 60
+  }
+
+  timeouts {
+    update = "10m"
+  }
+
   depends_on = [
     azapi_resource.replication_vault,
-    time_sleep.wait_for_role_propagation
-  ]
-}
-
-# Wait for AMH solution update to propagate
-resource "time_sleep" "wait_for_solution_update" {
-  count = local.is_initialize_mode ? 1 : 0
-
-  create_duration = "60s"
-
-  depends_on = [
-    azapi_update_resource.update_solution_storage
-  ]
-}
-
-# Wait for all prerequisites to be ready before creating extension
-resource "time_sleep" "wait_for_solution_sync" {
-  count = local.is_initialize_mode && local.has_fabric_inputs ? 1 : 0
-
-  create_duration = "30s"
-
-  depends_on = [
-    time_sleep.wait_for_solution_update,
-    azapi_resource.replication_policy
+    azapi_resource.vault_storage_contributor,
+    azapi_resource.vault_storage_blob_contributor,
+    azapi_resource.source_dra_storage_contributor,
+    azapi_resource.source_dra_storage_blob_contributor,
+    azapi_resource.target_dra_storage_contributor,
+    azapi_resource.target_dra_storage_blob_contributor
   ]
 }
 
@@ -475,24 +453,25 @@ resource "azapi_resource" "replication_extension" {
   create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
   read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-  # Use shorter retry intervals
+
+  # Retry on propagation/consistency errors - handles eventual consistency without time_sleep
   retry = {
-    error_message_regex  = ["RetryableError", "InternalServerError", "RequestTimeout"]
-    interval_seconds     = 10
-    max_interval_seconds = 30
-    randomization_factor = 0.5
+    error_message_regex  = ["RetryableError", "InternalServerError", "RequestTimeout", "AuthorizationFailed", "PrincipalNotFound", "ResourceNotFound", "SolutionNotReady"]
+    interval_seconds     = 15
+    max_interval_seconds = 60
   }
   schema_validation_enabled = false
   update_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
 
   timeouts {
-    create = "10m"
+    create = "15m"
     delete = "5m"
     read   = "2m"
   }
 
   depends_on = [
-    time_sleep.wait_for_solution_sync
+    azapi_update_resource.update_solution_storage,
+    azapi_resource.replication_policy
   ]
 }
 
