@@ -18,6 +18,16 @@ variable "resource_group_name" {
   description = "The resource group where the resources will be deployed."
 }
 
+variable "subscription_id" {
+  type        = string
+  description = "The subscription ID where resources will be deployed. This is used as the parent scope for resource group operations."
+
+  validation {
+    condition     = can(regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", var.subscription_id))
+    error_message = "The subscription_id must be a valid GUID in the format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx."
+  }
+}
+
 variable "app_consistent_frequency_minutes" {
   type        = number
   default     = 240 # 4 hours
@@ -63,26 +73,6 @@ variable "custom_location_id" {
 # required AVM interfaces
 # remove only if not supported by the resource
 # tflint-ignore: terraform_unused_declarations
-variable "customer_managed_key" {
-  type = object({
-    key_vault_resource_id = string
-    key_name              = string
-    key_version           = optional(string, null)
-    user_assigned_identity = optional(object({
-      resource_id = string
-    }), null)
-  })
-  default     = null
-  description = <<DESCRIPTION
-A map describing customer-managed keys to associate with the resource. This includes the following properties:
-- `key_vault_resource_id` - The resource ID of the Key Vault where the key is stored.
-- `key_name` - The name of the key.
-- `key_version` - (Optional) The version of the key. If not specified, the latest version is used.
-- `user_assigned_identity` - (Optional) An object representing a user-assigned identity with the following properties:
-  - `resource_id` - The resource ID of the user-assigned identity.
-DESCRIPTION
-}
-
 variable "diagnostic_settings" {
   type = map(object({
     name                                     = optional(string, null)
@@ -137,7 +127,15 @@ variable "disks_to_include" {
     is_dynamic       = optional(bool, true)
   }))
   default     = []
-  description = "Disks to include for replication (power user mode)"
+  description = <<DESCRIPTION
+A list of disks to include for replication (power user mode). Each object in the list includes the following properties:
+
+- `disk_id` - (Required) The unique identifier of the disk to replicate.
+- `disk_size_gb` - (Required) The size of the disk in gigabytes.
+- `disk_file_format` - (Optional) The file format of the disk. Defaults to `"VHDX"`.
+- `is_os_disk` - (Required) Whether this disk is the operating system disk.
+- `is_dynamic` - (Optional) Whether the disk is dynamic. Defaults to `true`.
+DESCRIPTION
 }
 
 variable "display_name" {
@@ -271,7 +269,14 @@ variable "nics_to_include" {
     selection_type    = optional(string, "SelectedByUser")
   }))
   default     = []
-  description = "NICs to include for replication (power user mode)"
+  description = <<DESCRIPTION
+A list of NICs to include for replication (power user mode). Each object in the list includes the following properties:
+
+- `nic_id` - (Required) The unique identifier of the network interface card to replicate.
+- `target_network_id` - (Required) The ARM resource ID of the target logical network for the NIC.
+- `test_network_id` - (Optional) The ARM resource ID of the test logical network for the NIC.
+- `selection_type` - (Optional) The selection type for the NIC. Defaults to `"SelectedByUser"`.
+DESCRIPTION
 }
 
 # Operation Mode
