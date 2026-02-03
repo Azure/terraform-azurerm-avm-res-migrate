@@ -27,11 +27,6 @@ This example demonstrates how to create a new Azure Migrate project using the mo
 - **VM Discovery must be performed from the Azure Portal after project creation**
 
 ```hcl
-# --------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for license information.
-# --------------------------------------------------------------------------------------------
-#
 # Example: Create New Azure Migrate Project
 # This example demonstrates how to create a new Azure Migrate project
 #

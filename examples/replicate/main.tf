@@ -1,8 +1,3 @@
-# --------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for license information.
-# --------------------------------------------------------------------------------------------
-#
 # Example: Create VM Replication
 # This example demonstrates how to create replication for a VM to Azure Stack HCI
 #
@@ -40,6 +35,7 @@ module "replicate_vm" {
 
   name                       = "vm-replication"
   resource_group_name        = var.resource_group_name
+  subscription_id            = var.subscription_id
   custom_location_id         = var.custom_location_id
   disks_to_include           = var.disks_to_include
   hyperv_generation          = var.hyperv_generation

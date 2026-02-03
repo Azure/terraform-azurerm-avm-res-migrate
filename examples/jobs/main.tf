@@ -1,8 +1,3 @@
-# --------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for license information.
-# --------------------------------------------------------------------------------------------
-#
 # Example: Get Replication Jobs
 # This example demonstrates how to retrieve replication job status
 #
@@ -28,6 +23,7 @@ module "replication_jobs" {
 
   name                = "replication-jobs"
   resource_group_name = var.resource_group_name
+  subscription_id     = var.subscription_id
   instance_type       = var.instance_type
   location            = var.location
   operation_mode      = "jobs"

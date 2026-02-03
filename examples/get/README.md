@@ -5,11 +5,6 @@
 This example demonstrates retrieving details about a protected item (replicated VM).
 
 ```hcl
-# --------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for license information.
-# --------------------------------------------------------------------------------------------
-#
 # Example: Get Protected Item Details
 # This example demonstrates how to retrieve details of a protected (replicating) VM
 #

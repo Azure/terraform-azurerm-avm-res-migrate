@@ -19,6 +19,7 @@ module "discover_vms" {
 
   name                = "migrate-discover"
   resource_group_name = var.resource_group_name
+  subscription_id     = var.subscription_id
   instance_type       = var.instance_type
   operation_mode      = "discover"
   project_name        = var.project_name

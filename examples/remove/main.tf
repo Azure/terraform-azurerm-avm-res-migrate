@@ -1,8 +1,3 @@
-# --------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for license information.
-# --------------------------------------------------------------------------------------------
-#
 # Example: Remove VM Replication
 # This example demonstrates how to remove/disable replication for a protected item
 #
@@ -28,6 +23,7 @@ module "remove_replication" {
 
   name                = "remove-replication"
   resource_group_name = var.resource_group_name
+  subscription_id     = var.subscription_id
   force_remove        = var.force_remove
   location            = var.location
   operation_mode      = "remove"

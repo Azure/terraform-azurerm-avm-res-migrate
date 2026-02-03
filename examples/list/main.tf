@@ -1,8 +1,3 @@
-# --------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for license information.
-# --------------------------------------------------------------------------------------------
-#
 # Example: List Protected Items
 # This example demonstrates how to list all protected (replicating) VMs in a vault
 #
@@ -28,6 +23,7 @@ module "list_protected_items" {
 
   name                = "list-protected-items"
   resource_group_name = var.resource_group_name
+  subscription_id     = var.subscription_id
   instance_type       = var.instance_type
   operation_mode      = "list"
   # List by project name (vault auto-discovered)

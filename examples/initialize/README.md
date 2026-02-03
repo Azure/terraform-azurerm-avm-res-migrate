@@ -5,11 +5,6 @@
 This example demonstrates how to initialize replication infrastructure using the `initialize` operation mode.
 
 ```hcl
-# --------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for license information.
-# --------------------------------------------------------------------------------------------
-#
 # Example: Initialize Replication Infrastructure
 # This example demonstrates how to initialize the replication infrastructure
 # for Azure Stack HCI migration

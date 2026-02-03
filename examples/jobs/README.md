@@ -5,11 +5,6 @@
 This example demonstrates how to retrieve replication job information using the `jobs` operation mode.
 
 ```hcl
-# --------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for license information.
-# --------------------------------------------------------------------------------------------
-#
 # Example: Get Replication Jobs
 # This example demonstrates how to retrieve replication job status
 #

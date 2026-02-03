@@ -5,11 +5,6 @@
 This example demonstrates listing all protected items (replicated VMs) in a vault.
 
 ```hcl
-# --------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for license information.
-# --------------------------------------------------------------------------------------------
-#
 # Example: List Protected Items
 # This example demonstrates how to list all protected (replicating) VMs in a vault
 #

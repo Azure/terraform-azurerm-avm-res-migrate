@@ -1,8 +1,3 @@
-# --------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for license information.
-# --------------------------------------------------------------------------------------------
-#
 # Example: Initialize Replication Infrastructure
 # This example demonstrates how to initialize the replication infrastructure
 # for Azure Stack HCI migration
@@ -29,7 +24,8 @@ provider "azapi" {
 module "initialize_replication" {
   source = "../../"
 
-  name = "hci-migration-init"
+  name            = "hci-migration-init"
+  subscription_id = var.subscription_id
   # Resource configuration
   resource_group_name                = var.resource_group_name
   app_consistent_frequency_minutes   = var.app_consistent_frequency_minutes

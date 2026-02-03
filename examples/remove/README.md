@@ -30,11 +30,6 @@ Before running this example, you need:
 The `force_remove` option should be used with caution. It forces the removal even if the protected item is in an inconsistent state, which may leave orphaned resources.
 
 ```hcl
-# --------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for license information.
-# --------------------------------------------------------------------------------------------
-#
 # Example: Remove VM Replication
 # This example demonstrates how to remove/disable replication for a protected item
 #

@@ -1,8 +1,3 @@
-# --------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for license information.
-# --------------------------------------------------------------------------------------------
-#
 # Example: Create New Azure Migrate Project
 # This example demonstrates how to create a new Azure Migrate project
 #
@@ -28,6 +23,7 @@ module "create_migrate_project" {
 
   name                   = "create-project"
   resource_group_name    = var.resource_group_name
+  subscription_id        = var.subscription_id
   create_migrate_project = true # Set to true to create new project
   create_resource_group  = true # Set to true to create new resource group
   instance_type          = var.instance_type
