@@ -44,11 +44,10 @@ mock_provider "random" {}
 # ========================================
 
 variables {
-  name                = "test-migrate"
-  resource_group_name = "test-rg"
-  subscription_id     = "00000000-0000-0000-0000-000000000000"
-  enable_telemetry    = false
-  project_name        = "test-project"
+  name             = "test-migrate"
+  parent_id        = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/test-rg"
+  enable_telemetry = false
+  project_name     = "test-project"
 }
 
 # ========================================
@@ -350,11 +349,6 @@ run "default_values_check" {
   }
 
   assert {
-    condition     = var.create_resource_group == false
-    error_message = "create_resource_group should default to false"
-  }
-
-  assert {
     condition     = var.create_migrate_project == false
     error_message = "create_migrate_project should default to false"
   }
@@ -500,15 +494,15 @@ run "invalid_source_machine_type" {
   expect_failures = [var.source_machine_type]
 }
 
-run "invalid_subscription_id_format" {
+run "invalid_parent_id_format" {
   command = plan
 
   variables {
-    operation_mode  = "discover"
-    subscription_id = "not-a-valid-guid"
+    operation_mode = "discover"
+    parent_id      = "not-a-valid-resource-id"
   }
 
-  expect_failures = [var.subscription_id]
+  expect_failures = [var.parent_id]
 }
 
 run "invalid_name_too_short" {

@@ -4,6 +4,7 @@ locals {
   # ========================================
   # AVM REQUIRED LOCALS
   # ========================================
+  # tflint-ignore: terraform_unused_declarations
   managed_identities = {
     system_assigned_user_assigned = (var.managed_identities.system_assigned || length(var.managed_identities.user_assigned_resource_ids) > 0) ? {
       this = {
@@ -26,8 +27,19 @@ locals {
   role_definition_resource_substring = "/providers/Microsoft.Authorization/roleDefinitions"
 
   # ========================================
+  # SUBSCRIPTION & RESOURCE GROUP
+  # ========================================
+  # Parse subscription_id from parent_id (the resource group ID)
+  parsed_parent_id = provider::azapi::parse_resource_id("Microsoft.Resources/resourceGroups", var.parent_id)
+  subscription_id  = local.parsed_parent_id.subscription_id
+
+  # The resource group ID is simply parent_id
+  resource_group_id = var.parent_id
+
+  # ========================================
   # OPERATION MODE FLAGS
   # ========================================
+  # tflint-ignore: terraform_unused_declarations
   is_create_project_mode = var.operation_mode == "create-project"
   is_discover_mode       = var.operation_mode == "discover"
   is_get_mode            = var.operation_mode == "get"
@@ -39,16 +51,10 @@ locals {
   is_replicate_mode      = var.operation_mode == "replicate"
 
   # ========================================
-  # RESOURCE GROUP & PROJECT
+  # PROJECT
   # ========================================
-  # Create new resource group if requested
-  create_new_resource_group = var.create_resource_group
-  # Create new Migrate project if project_name is provided but create_migrate_project is true
+  # Create new Migrate project if project_name is provided and create_migrate_project is true
   create_new_project = var.create_migrate_project && var.project_name != null
-  # Resolved resource group (created or existing)
-  resource_group_id = local.create_new_resource_group ? azapi_resource.resource_group[0].id : data.azapi_resource.resource_group_existing[0].id
-  # Resource group reference
-  resource_group_name = var.resource_group_name
   # Resolved Migrate project ID (created or existing)
   migrate_project_id = local.create_new_project ? azapi_resource.migrate_project[0].id : (
     length(data.azapi_resource.migrate_project_existing) > 0 ? data.azapi_resource.migrate_project_existing[0].id : null

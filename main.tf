@@ -2,26 +2,8 @@
 # Resources only - see locals.tf for local values and data.tf for data sources
 
 # ========================================
-# RESOURCE GROUP & MIGRATE PROJECT
+# MIGRATE PROJECT & SOLUTIONS
 # ========================================
-
-# Create new resource group (if requested)
-resource "azapi_resource" "resource_group" {
-  count = local.create_new_resource_group ? 1 : 0
-
-  location  = var.location
-  name      = var.resource_group_name
-  parent_id = "/subscriptions/${var.subscription_id}"
-  type      = "Microsoft.Resources/resourceGroups@2021-04-01"
-  body = {
-    properties = {}
-  }
-  create_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-  delete_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-  read_headers              = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-  schema_validation_enabled = false
-  update_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-}
 
 # Create new Azure Migrate Project (if requested)
 resource "azapi_resource" "migrate_project" {
@@ -154,7 +136,7 @@ resource "azapi_resource" "migrate_project_role_assignment" {
   body = {
     properties = {
       principalId      = azapi_resource.migrate_project[0].identity[0].principal_id
-      roleDefinitionId = "/subscriptions/${var.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/ba480ccd-6499-4709-b581-8f38bb215c63"
+      roleDefinitionId = "/subscriptions/${local.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/ba480ccd-6499-4709-b581-8f38bb215c63"
       principalType    = "ServicePrincipal"
     }
   }
@@ -256,7 +238,7 @@ resource "azapi_resource" "vault_storage_contributor" {
   body = {
     properties = {
       principalId      = local.create_new_vault ? azapi_resource.replication_vault[0].identity[0].principal_id : data.azapi_resource.replication_vault[0].output.identity.principalId
-      roleDefinitionId = "/subscriptions/${var.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+      roleDefinitionId = "/subscriptions/${local.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
       principalType    = "ServicePrincipal"
     }
   }
@@ -275,7 +257,7 @@ resource "azapi_resource" "vault_storage_blob_contributor" {
   body = {
     properties = {
       principalId      = local.create_new_vault ? azapi_resource.replication_vault[0].identity[0].principal_id : data.azapi_resource.replication_vault[0].output.identity.principalId
-      roleDefinitionId = "/subscriptions/${var.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+      roleDefinitionId = "/subscriptions/${local.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
       principalType    = "ServicePrincipal"
     }
   }
@@ -302,7 +284,7 @@ resource "azapi_resource" "source_dra_storage_contributor" {
   body = {
     properties = {
       principalId      = local.source_dra_object_id
-      roleDefinitionId = "/subscriptions/${var.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+      roleDefinitionId = "/subscriptions/${local.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
       principalType    = "ServicePrincipal"
     }
   }
@@ -323,7 +305,7 @@ resource "azapi_resource" "source_dra_storage_blob_contributor" {
   body = {
     properties = {
       principalId      = local.source_dra_object_id
-      roleDefinitionId = "/subscriptions/${var.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+      roleDefinitionId = "/subscriptions/${local.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
       principalType    = "ServicePrincipal"
     }
   }
@@ -344,7 +326,7 @@ resource "azapi_resource" "target_dra_storage_contributor" {
   body = {
     properties = {
       principalId      = local.target_dra_object_id
-      roleDefinitionId = "/subscriptions/${var.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+      roleDefinitionId = "/subscriptions/${local.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
       principalType    = "ServicePrincipal"
     }
   }
@@ -365,7 +347,7 @@ resource "azapi_resource" "target_dra_storage_blob_contributor" {
   body = {
     properties = {
       principalId      = local.target_dra_object_id
-      roleDefinitionId = "/subscriptions/${var.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+      roleDefinitionId = "/subscriptions/${local.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
       principalType    = "ServicePrincipal"
     }
   }
@@ -474,21 +456,6 @@ resource "azapi_resource" "replication_extension" {
 # CREATE SERVER REPLICATION
 # ========================================
 
-# Create target resource group if it doesn't exist (for replicate mode)
-resource "azapi_resource" "target_resource_group" {
-  count = local.is_replicate_mode && var.target_resource_group_id != null ? 1 : 0
-
-  name      = basename(var.target_resource_group_id)
-  parent_id = "/subscriptions/${split("/", var.target_resource_group_id)[2]}"
-  type      = "Microsoft.Resources/resourceGroups@2021-04-01"
-  location  = coalesce(var.location, "westus2")
-  tags      = var.tags
-
-  lifecycle {
-    ignore_changes = [tags, location]
-  }
-}
-
 # Create protected item (VM replication)
 # IMPORTANT: The protected item name must be the source machine name (last segment of machine_id),
 # NOT the target VM name. The targetVmName goes inside customProperties.
@@ -528,13 +495,13 @@ resource "azapi_resource" "protected_item" {
             isDynamic              = true
             diskPhysicalSectorSize = 512
         }] : []
-        targetVmName          = var.target_vm_name
-        targetResourceGroupId = var.target_resource_group_id
-        storageContainerId    = var.target_storage_path_id
-        hyperVGeneration      = var.hyperv_generation
-        targetCpuCores        = var.target_vm_cpu_cores
-        sourceCpuCores        = var.source_vm_cpu_cores
-        isDynamicRam          = var.is_dynamic_memory_enabled
+        targetVmName            = var.target_vm_name
+        targetResourceGroupId   = var.target_resource_group_id
+        storageContainerId      = var.target_storage_path_id
+        hyperVGeneration        = var.hyperv_generation
+        targetCpuCores          = var.target_vm_cpu_cores
+        sourceCpuCores          = var.source_vm_cpu_cores
+        isDynamicRam            = var.is_dynamic_memory_enabled
         sourceMemoryInMegaBytes = var.source_vm_ram_mb
         targetMemoryInMegaBytes = floor(var.target_vm_ram_mb)
         # Power user mode: Use explicit nics_to_include
@@ -578,8 +545,6 @@ resource "azapi_resource" "protected_item" {
     read   = "10m"
     update = "5m"
   }
-
-  depends_on = [azapi_resource.target_resource_group]
 
   lifecycle {
     ignore_changes = [
@@ -701,7 +666,7 @@ resource "azapi_resource" "role_assignment" {
   body = {
     properties = {
       principalId                        = each.value.principal_id
-      roleDefinitionId                   = strcontains(lower(each.value.role_definition_id_or_name), lower(local.role_definition_resource_substring)) ? each.value.role_definition_id_or_name : "/subscriptions/${var.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/${each.value.role_definition_id_or_name}"
+      roleDefinitionId                   = strcontains(lower(each.value.role_definition_id_or_name), lower(local.role_definition_resource_substring)) ? each.value.role_definition_id_or_name : "/subscriptions/${local.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/${each.value.role_definition_id_or_name}"
       principalType                      = each.value.principal_type
       condition                          = each.value.condition
       conditionVersion                   = each.value.condition_version

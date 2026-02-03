@@ -4,22 +4,9 @@ variable "force_remove" {
   description = "Specifies whether the replication needs to be force removed. Use with caution as force removal may leave resources in an inconsistent state."
 }
 
-variable "location" {
+variable "parent_id" {
   type        = string
-  default     = null
-  description = "Optional: The Azure region. If not specified, uses the resource group's location."
-}
-
-variable "resource_group_name" {
-  type        = string
-  default     = "my-migrate-project-rg"
-  description = "The name of the resource group where the replication vault exists"
-}
-
-variable "subscription_id" {
-  type        = string
-  default     = "00000000-0000-0000-0000-000000000000"
-  description = "The Azure subscription ID"
+  description = "The resource ID of the resource group where the replication vault exists. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}"
 }
 
 variable "tags" {

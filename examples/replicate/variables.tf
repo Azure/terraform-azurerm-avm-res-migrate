@@ -106,6 +106,11 @@ variable "os_disk_size_gb" {
   description = "The OS disk size in GB for DEFAULT USER MODE. Used when disks_to_include is not provided."
 }
 
+variable "parent_id" {
+  type        = string
+  description = "The resource ID of the resource group containing the Azure Migrate project. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}"
+}
+
 variable "policy_name" {
   type        = string
   default     = "saif-project-01424replicationvaultVMwareToAzStackHCIpolicy"
@@ -128,12 +133,6 @@ variable "replication_vault_id" {
   type        = string
   default     = "/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-012726-rg/providers/Microsoft.DataReplication/replicationVaults/saif-project-01424replicationvault"
   description = "The full resource ID of the replication vault"
-}
-
-variable "resource_group_name" {
-  type        = string
-  default     = "saif-project-012726-rg"
-  description = "The name of the resource group containing the Azure Migrate project"
 }
 
 variable "run_as_account_id" {
@@ -164,12 +163,6 @@ variable "source_vm_ram_mb" {
   type        = number
   default     = 4096
   description = "Amount of RAM in MB in the source VM"
-}
-
-variable "subscription_id" {
-  type        = string
-  default     = "f6f66a94-f184-45da-ac12-ffbfd8a6eb29"
-  description = "The Azure subscription ID where resources will be deployed"
 }
 
 variable "tags" {

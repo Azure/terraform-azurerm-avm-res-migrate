@@ -4,15 +4,6 @@
 # CORE DATA SOURCES
 # ========================================
 
-# Get existing resource group
-data "azapi_resource" "resource_group_existing" {
-  count = !local.create_new_resource_group ? 1 : 0
-
-  name      = var.resource_group_name
-  parent_id = "/subscriptions/${var.subscription_id}"
-  type      = "Microsoft.Resources/resourceGroups@2021-04-01"
-}
-
 # Get existing Azure Migrate Project (for all modes)
 data "azapi_resource" "migrate_project_existing" {
   count = !local.create_new_project && var.project_name != null ? 1 : 0

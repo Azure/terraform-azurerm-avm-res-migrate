@@ -8,7 +8,7 @@ output "migrate_project_name" {
   value       = var.project_name
 }
 
-output "resource_group_name" {
-  description = "The resource group containing the Migrate project"
-  value       = var.resource_group_name
+output "resource_group_id" {
+  description = "The resource group ID containing the Migrate project"
+  value       = var.parent_id
 }

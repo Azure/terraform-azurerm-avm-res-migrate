@@ -4,10 +4,9 @@ variable "instance_type" {
   description = "The migration instance type (VMwareToAzStackHCI or HyperVToAzStackHCI)"
 }
 
-variable "location" {
+variable "parent_id" {
   type        = string
-  default     = null
-  description = "Optional: The Azure region. If not specified, uses the resource group's location."
+  description = "The resource ID of the resource group containing the Azure Migrate project. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}"
 }
 
 variable "protected_item_id" {
@@ -16,22 +15,10 @@ variable "protected_item_id" {
   description = "The full resource ID of the protected item (replicated VM) to migrate"
 }
 
-variable "resource_group_name" {
-  type        = string
-  default     = "my-migrate-project-rg"
-  description = "Name of the resource group containing the Azure Migrate project"
-}
-
 variable "shutdown_source_vm" {
   type        = bool
   default     = true
   description = "Whether to shutdown the source VM before migration (recommended for production migrations)"
-}
-
-variable "subscription_id" {
-  type        = string
-  default     = null
-  description = "Azure subscription ID"
 }
 
 variable "tags" {

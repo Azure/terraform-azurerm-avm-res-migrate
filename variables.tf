@@ -2,6 +2,7 @@
 # MIGRATION-SPECIFIC VARIABLES
 # ========================================
 
+# tflint-ignore: terraform_unused_declarations
 variable "name" {
   type        = string
   description = "The name of the migration resource."
@@ -12,19 +13,13 @@ variable "name" {
   }
 }
 
-# This is required for most resource modules
-variable "resource_group_name" {
+variable "parent_id" {
   type        = string
-  description = "The resource group where the resources will be deployed."
-}
-
-variable "subscription_id" {
-  type        = string
-  description = "The subscription ID where resources will be deployed. This is used as the parent scope for resource group operations."
+  description = "The resource ID of the resource group where resources will be deployed. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}"
 
   validation {
-    condition     = can(regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", var.subscription_id))
-    error_message = "The subscription_id must be a valid GUID in the format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx."
+    condition     = can(regex("^/subscriptions/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/resourceGroups/[^/]+$", var.parent_id))
+    error_message = "The parent_id must be a valid resource group ARM ID in the format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}"
   }
 }
 
@@ -56,12 +51,6 @@ variable "create_migrate_project" {
   type        = bool
   default     = false
   description = "Whether to create a new Azure Migrate project. If false, an existing project is queried."
-}
-
-variable "create_resource_group" {
-  type        = bool
-  default     = false
-  description = "Whether to create a new resource group. If false, an existing resource group is queried. When true, location must be specified."
 }
 
 variable "custom_location_id" {
