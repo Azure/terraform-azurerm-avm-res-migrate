@@ -1,4 +1,4 @@
-# terraform-azurerm-avm-res-migrate
+# terraform-azurerm-avm-ptn-azure-local-migrate
 
 > ⚠️ **Preview Version** - This module is currently in preview. Features and APIs may change before the stable release.
 
