@@ -1,3 +1,8 @@
+variable "parent_id" {
+  type        = string
+  description = "The resource ID of the resource group containing the Azure Migrate project. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}"
+}
+
 variable "app_consistent_frequency_minutes" {
   type        = number
   default     = 240
@@ -20,11 +25,6 @@ variable "location" {
   type        = string
   default     = "westus2"
   description = "Optional: The Azure region where resources will be deployed. If not specified, uses the resource group's location."
-}
-
-variable "parent_id" {
-  type        = string
-  description = "The resource ID of the resource group containing the Azure Migrate project. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}"
 }
 
 variable "project_name" {

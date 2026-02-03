@@ -1,12 +1,12 @@
+variable "parent_id" {
+  type        = string
+  description = "The resource ID of the resource group containing the Azure Migrate project. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}"
+}
+
 variable "instance_type" {
   type        = string
   default     = "VMwareToAzStackHCI"
   description = "The migration instance type (VMwareToAzStackHCI or HyperVToAzStackHCI)"
-}
-
-variable "parent_id" {
-  type        = string
-  description = "The resource ID of the resource group containing the Azure Migrate project. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}"
 }
 
 variable "protected_item_id" {

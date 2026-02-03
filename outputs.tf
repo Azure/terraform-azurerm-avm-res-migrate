@@ -1,13 +1,6 @@
-# tflint-ignore: terraform_unused_declarations
-output "resource_id" {
-  description = "The resource ID of the primary resource managed by this module. For AVM compliance (RMFR7)."
-  value       = local.migrate_project_id
-}
-
-output "migrate_project_id" {
-  description = "The resource ID of the Azure Migrate project (created or existing)"
-  value       = local.migrate_project_id
-}
+# ========================================
+# DISCOVER SERVERS OUTPUTS
+# ========================================
 
 output "cache_storage_account_id" {
   description = "ID of the cache storage account"
@@ -18,10 +11,6 @@ output "cache_storage_account_name" {
   description = "Name of the cache storage account"
   value       = local.is_initialize_mode && length(azapi_resource.cache_storage_account) > 0 ? azapi_resource.cache_storage_account[0].name : null
 }
-
-# ========================================
-# DISCOVER SERVERS OUTPUTS
-# ========================================
 
 output "discovered_servers" {
   description = "List of discovered servers from Azure Migrate (filtered: index, machine_name, ip_addresses, operating_system, boot_type, os_disk_id)"
@@ -50,12 +39,6 @@ output "discovered_servers_raw" {
   value       = local.is_discover_mode && length(data.azapi_resource_list.discovered_servers) > 0 ? data.azapi_resource_list.discovered_servers[0].output : null
 }
 
-output "total_machines_count" {
-  description = "Total number of machines (including those without discovery data)"
-  value       = local.is_discover_mode && length(data.azapi_resource_list.discovered_servers) > 0 ? length(try(data.azapi_resource_list.discovered_servers[0].output.value, [])) : 0
-}
-
-
 output "location_output" {
   description = "Azure region where resources are deployed"
   value       = var.location
@@ -64,6 +47,11 @@ output "location_output" {
 output "machine_id" {
   description = "Machine ID being replicated"
   value       = var.machine_id
+}
+
+output "migrate_project_id" {
+  description = "The resource ID of the Azure Migrate project (created or existing)"
+  value       = local.migrate_project_id
 }
 
 output "migration_operation_details" {
@@ -411,6 +399,12 @@ output "resource_group_id" {
   value       = local.resource_group_id
 }
 
+# tflint-ignore: terraform_unused_declarations
+output "resource_id" {
+  description = "The resource ID of the primary resource managed by this module. For AVM compliance (RMFR7)."
+  value       = local.migrate_project_id
+}
+
 output "source_fabric_discovered" {
   description = "Details of the auto-discovered source fabric (when using appliance name)"
   value = local.is_initialize_mode && local.discovered_source_fabric != null ? {
@@ -444,6 +438,11 @@ output "target_fabric_id" {
 output "target_vm_name_output" {
   description = "Name of the target VM to be created"
   value       = var.target_vm_name
+}
+
+output "total_machines_count" {
+  description = "Total number of machines (including those without discovery data)"
+  value       = local.is_discover_mode && length(data.azapi_resource_list.discovered_servers) > 0 ? length(try(data.azapi_resource_list.discovered_servers[0].output.value, [])) : 0
 }
 
 output "vault_id_for_jobs" {

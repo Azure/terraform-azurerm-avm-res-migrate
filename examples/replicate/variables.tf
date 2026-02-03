@@ -1,3 +1,8 @@
+variable "parent_id" {
+  type        = string
+  description = "The resource ID of the resource group containing the Azure Migrate project. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}"
+}
+
 variable "custom_location_id" {
   type        = string
   default     = "/subscriptions/0daa57b3-f823-4921-a09a-33c048e64022/resourceGroups/EDGECI-REGISTRATION-rr1n25r1606-i3dfqVNA/providers/Microsoft.ExtendedLocation/customLocations/n25r1606-cl-customLocation"
@@ -69,6 +74,13 @@ variable "machine_id" {
   description = "The full resource ID of the machine to replicate (OffAzure/VMwareSites path)"
 }
 
+# Default user mode variables (alternative to nics_to_include)
+variable "nic_id" {
+  type        = string
+  default     = null # Set to a NIC ID like "4000" to use DEFAULT USER MODE
+  description = "NIC ID for DEFAULT USER MODE. Used when nics_to_include is not provided but target_virtual_switch_id is specified."
+}
+
 variable "nics_to_include" {
   type = list(object({
     nic_id            = string
@@ -87,13 +99,6 @@ variable "nics_to_include" {
   description = "NICs to include for replication (from machine properties). Use this for POWER USER MODE."
 }
 
-# Default user mode variables (alternative to nics_to_include)
-variable "nic_id" {
-  type        = string
-  default     = null # Set to a NIC ID like "4000" to use DEFAULT USER MODE
-  description = "NIC ID for DEFAULT USER MODE. Used when nics_to_include is not provided but target_virtual_switch_id is specified."
-}
-
 variable "os_disk_id" {
   type        = string
   default     = "6000C29f-59f4-37d9-acdd-8f90d99d07e0"
@@ -104,11 +109,6 @@ variable "os_disk_size_gb" {
   type        = number
   default     = 40
   description = "The OS disk size in GB for DEFAULT USER MODE. Used when disks_to_include is not provided."
-}
-
-variable "parent_id" {
-  type        = string
-  description = "The resource ID of the resource group containing the Azure Migrate project. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}"
 }
 
 variable "policy_name" {

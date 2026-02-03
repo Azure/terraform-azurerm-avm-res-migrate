@@ -1,3 +1,8 @@
+variable "parent_id" {
+  type        = string
+  description = "The resource ID of the resource group where the Migrate project will be created. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}"
+}
+
 variable "instance_type" {
   type        = string
   default     = "VMwareToAzStackHCI"
@@ -8,11 +13,6 @@ variable "location" {
   type        = string
   default     = "westus2"
   description = "The Azure region where the Migrate project will be created. Note: Not all regions support Azure Migrate projects. Supported regions include: centralus, westus2, northeurope, westeurope, etc."
-}
-
-variable "parent_id" {
-  type        = string
-  description = "The resource ID of the resource group where the Migrate project will be created. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}"
 }
 
 variable "project_name" {

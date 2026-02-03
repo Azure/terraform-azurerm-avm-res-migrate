@@ -1,12 +1,12 @@
+variable "parent_id" {
+  type        = string
+  description = "The resource ID of the resource group where the replication vault exists. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}"
+}
+
 variable "force_remove" {
   type        = bool
   default     = false
   description = "Specifies whether the replication needs to be force removed. Use with caution as force removal may leave resources in an inconsistent state."
-}
-
-variable "parent_id" {
-  type        = string
-  description = "The resource ID of the resource group where the replication vault exists. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}"
 }
 
 variable "tags" {

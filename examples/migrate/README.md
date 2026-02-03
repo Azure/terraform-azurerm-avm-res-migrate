@@ -10,32 +10,29 @@ This example demonstrates how to perform a planned failover (migration) of a rep
 #
 
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.9"
 
   required_providers {
     azapi = {
       source  = "azure/azapi"
-      version = ">= 1.9, < 3.0"
+      version = "~> 2.4"
     }
   }
 }
 
-provider "azapi" {
-  subscription_id = var.subscription_id
-}
+provider "azapi" {}
 
 # Perform planned failover (migration) of a protected VM
 module "migrate_vm" {
   source = "../../"
 
-  name                = "vm-migration"
-  resource_group_name = var.resource_group_name
-  instance_type       = var.instance_type
-  location            = var.location
-  operation_mode      = "migrate"
-  protected_item_id   = var.protected_item_id
-  shutdown_source_vm  = var.shutdown_source_vm
-  tags                = var.tags
+  name               = "vm-migration"
+  parent_id          = var.parent_id
+  instance_type      = var.instance_type
+  operation_mode     = "migrate"
+  protected_item_id  = var.protected_item_id
+  shutdown_source_vm = var.shutdown_source_vm
+  tags               = var.tags
 }
 ```
 
@@ -44,9 +41,9 @@ module "migrate_vm" {
 
 The following requirements are needed by this module:
 
-- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1.5)
+- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1.9)
 
-- <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (>= 1.9, < 3.0)
+- <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (~> 2.4)
 
 ## Resources
 
@@ -55,7 +52,13 @@ No resources.
 <!-- markdownlint-disable MD013 -->
 ## Required Inputs
 
-No required inputs.
+The following input variables are required:
+
+### <a name="input_parent_id"></a> [parent\_id](#input\_parent\_id)
+
+Description: The resource ID of the resource group containing the Azure Migrate project. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}
+
+Type: `string`
 
 ## Optional Inputs
 
@@ -69,14 +72,6 @@ Type: `string`
 
 Default: `"VMwareToAzStackHCI"`
 
-### <a name="input_location"></a> [location](#input\_location)
-
-Description: Optional: The Azure region. If not specified, uses the resource group's location.
-
-Type: `string`
-
-Default: `null`
-
 ### <a name="input_protected_item_id"></a> [protected\_item\_id](#input\_protected\_item\_id)
 
 Description: The full resource ID of the protected item (replicated VM) to migrate
@@ -85,14 +80,6 @@ Type: `string`
 
 Default: `"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-resource-group/providers/Microsoft.DataReplication/replicationVaults/my-vault/protectedItems/my-vm"`
 
-### <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name)
-
-Description: Name of the resource group containing the Azure Migrate project
-
-Type: `string`
-
-Default: `"my-migrate-project-rg"`
-
 ### <a name="input_shutdown_source_vm"></a> [shutdown\_source\_vm](#input\_shutdown\_source\_vm)
 
 Description: Whether to shutdown the source VM before migration (recommended for production migrations)
@@ -100,14 +87,6 @@ Description: Whether to shutdown the source VM before migration (recommended for
 Type: `bool`
 
 Default: `true`
-
-### <a name="input_subscription_id"></a> [subscription\_id](#input\_subscription\_id)
-
-Description: Azure subscription ID
-
-Type: `string`
-
-Default: `null`
 
 ### <a name="input_tags"></a> [tags](#input\_tags)
 

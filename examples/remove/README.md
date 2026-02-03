@@ -35,31 +35,28 @@ The `force_remove` option should be used with caution. It forces the removal eve
 #
 
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.9"
 
   required_providers {
     azapi = {
       source  = "azure/azapi"
-      version = ">= 1.9, < 3.0"
+      version = "~> 2.4"
     }
   }
 }
 
-provider "azapi" {
-  subscription_id = var.subscription_id
-}
+provider "azapi" {}
 
 # Remove replication for a protected item
 module "remove_replication" {
   source = "../../"
 
-  name                = "remove-replication"
-  resource_group_name = var.resource_group_name
-  force_remove        = var.force_remove
-  location            = var.location
-  operation_mode      = "remove"
-  tags                = var.tags
-  target_object_id    = var.target_object_id
+  name             = "remove-replication"
+  parent_id        = var.parent_id
+  force_remove     = var.force_remove
+  operation_mode   = "remove"
+  tags             = var.tags
+  target_object_id = var.target_object_id
 }
 ```
 
@@ -68,9 +65,9 @@ module "remove_replication" {
 
 The following requirements are needed by this module:
 
-- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1.5)
+- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1.9)
 
-- <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (>= 1.9, < 3.0)
+- <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (~> 2.4)
 
 ## Resources
 
@@ -79,7 +76,13 @@ No resources.
 <!-- markdownlint-disable MD013 -->
 ## Required Inputs
 
-No required inputs.
+The following input variables are required:
+
+### <a name="input_parent_id"></a> [parent\_id](#input\_parent\_id)
+
+Description: The resource ID of the resource group where the replication vault exists. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}
+
+Type: `string`
 
 ## Optional Inputs
 
@@ -92,30 +95,6 @@ Description: Specifies whether the replication needs to be force removed. Use wi
 Type: `bool`
 
 Default: `false`
-
-### <a name="input_location"></a> [location](#input\_location)
-
-Description: Optional: The Azure region. If not specified, uses the resource group's location.
-
-Type: `string`
-
-Default: `null`
-
-### <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name)
-
-Description: The name of the resource group where the replication vault exists
-
-Type: `string`
-
-Default: `"my-migrate-project-rg"`
-
-### <a name="input_subscription_id"></a> [subscription\_id](#input\_subscription\_id)
-
-Description: The Azure subscription ID
-
-Type: `string`
-
-Default: `"00000000-0000-0000-0000-000000000000"`
 
 ### <a name="input_tags"></a> [tags](#input\_tags)
 

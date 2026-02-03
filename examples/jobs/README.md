@@ -10,30 +10,27 @@ This example demonstrates how to retrieve replication job information using the 
 #
 
 terraform {
-  required_version = ">= 1.5"
+  required_version = ">= 1.9"
 
   required_providers {
     azapi = {
       source  = "azure/azapi"
-      version = ">= 1.9, < 3.0"
+      version = "~> 2.4"
     }
   }
 }
 
-provider "azapi" {
-  subscription_id = var.subscription_id
-}
+provider "azapi" {}
 
 # Get replication jobs
 module "replication_jobs" {
   source = "../../"
 
-  name                = "replication-jobs"
-  resource_group_name = var.resource_group_name
-  instance_type       = var.instance_type
-  location            = var.location
-  operation_mode      = "jobs"
-  project_name        = var.project_name
+  name           = "replication-jobs"
+  parent_id      = var.parent_id
+  instance_type  = var.instance_type
+  operation_mode = "jobs"
+  project_name   = var.project_name
   # Use explicit vault ID
   replication_vault_id = var.replication_vault_id
   tags                 = var.tags
@@ -46,9 +43,9 @@ module "replication_jobs" {
 
 The following requirements are needed by this module:
 
-- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1.5)
+- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (>= 1.9)
 
-- <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (>= 1.9, < 3.0)
+- <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (~> 2.4)
 
 ## Resources
 
@@ -57,7 +54,13 @@ No resources.
 <!-- markdownlint-disable MD013 -->
 ## Required Inputs
 
-No required inputs.
+The following input variables are required:
+
+### <a name="input_parent_id"></a> [parent\_id](#input\_parent\_id)
+
+Description: The resource ID of the resource group containing the Azure Migrate project. Format: /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}
+
+Type: `string`
 
 ## Optional Inputs
 
@@ -70,14 +73,6 @@ Description: The migration instance type (VMwareToAzStackHCI or HyperVToAzStackH
 Type: `string`
 
 Default: `"VMwareToAzStackHCI"`
-
-### <a name="input_location"></a> [location](#input\_location)
-
-Description: Optional: The Azure region. If not specified, uses the resource group's location.
-
-Type: `string`
-
-Default: `"eastus"`
 
 ### <a name="input_project_name"></a> [project\_name](#input\_project\_name)
 
@@ -94,22 +89,6 @@ Description: The full resource ID of the replication vault (optional, derived fr
 Type: `string`
 
 Default: `"/subscriptions/f6f66a94-f184-45da-ac12-ffbfd8a6eb29/resourceGroups/saif-project-012726-rg/providers/Microsoft.DataReplication/replicationVaults/saif-project-01424replicationvault"`
-
-### <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name)
-
-Description: The name of the resource group containing the Azure Migrate project
-
-Type: `string`
-
-Default: `"saif-project-012726-rg"`
-
-### <a name="input_subscription_id"></a> [subscription\_id](#input\_subscription\_id)
-
-Description: The Azure subscription ID where resources will be deployed
-
-Type: `string`
-
-Default: `"f6f66a94-f184-45da-ac12-ffbfd8a6eb29"`
 
 ### <a name="input_tags"></a> [tags](#input\_tags)
 
