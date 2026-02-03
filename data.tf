@@ -13,15 +13,6 @@ data "azapi_resource" "migrate_project_existing" {
   type      = "Microsoft.Migrate/migrateprojects@2020-06-01-preview"
 }
 
-# Get Discovery Solution (needed for appliance mapping)
-data "azapi_resource" "discovery_solution" {
-  count = local.is_initialize_mode || local.is_replicate_mode ? 1 : 0
-
-  name      = "Servers-Discovery-ServerDiscovery"
-  parent_id = local.migrate_project_id
-  type      = "Microsoft.Migrate/migrateprojects/solutions@2020-06-01-preview"
-}
-
 # Get Data Replication Solution
 data "azapi_resource" "replication_solution" {
   count = (local.is_initialize_mode || local.is_replicate_mode || local.is_list_mode || local.is_get_mode || local.is_jobs_mode) && var.project_name != null ? 1 : 0
@@ -87,19 +78,6 @@ data "azapi_resource_list" "target_fabric_agents" {
   response_export_values = ["value"]
 
   depends_on = [data.azapi_resource_list.replication_fabrics]
-}
-
-# ========================================
-# REPLICATE MODE DATA SOURCES
-# ========================================
-
-# Get discovered machine details (if machine_id provided)
-# Note: This data source is currently not used and disabled to avoid lookup failures
-data "azapi_resource" "discovered_machine" {
-  count = 0 # Disabled: local.is_replicate_mode && var.machine_id != null ? 1 : 0
-
-  resource_id = var.machine_id
-  type        = contains(split("/", lower(var.machine_id)), "migrateprojects") ? "Microsoft.Migrate/migrateprojects/machines@2020-05-01" : (contains(split("/", lower(var.machine_id)), "hypervsites") ? "Microsoft.OffAzure/HyperVSites/machines@2023-06-06" : "Microsoft.OffAzure/VMwareSites/machines@2023-06-06")
 }
 
 # ========================================

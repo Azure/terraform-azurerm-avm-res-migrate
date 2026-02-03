@@ -51,6 +51,7 @@ provider "azapi" {}
 module "remove_replication" {
   source = "../../"
 
+  location         = var.location
   name             = "remove-replication"
   parent_id        = var.parent_id
   force_remove     = var.force_remove
@@ -95,6 +96,14 @@ Description: Specifies whether the replication needs to be force removed. Use wi
 Type: `bool`
 
 Default: `false`
+
+### <a name="input_location"></a> [location](#input\_location)
+
+Description: Optional: The Azure region where resources will be deployed. If not specified, uses the resource group's location.
+
+Type: `string`
+
+Default: `"westus2"`
 
 ### <a name="input_tags"></a> [tags](#input\_tags)
 

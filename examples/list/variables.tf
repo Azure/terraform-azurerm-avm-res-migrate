@@ -9,6 +9,12 @@ variable "instance_type" {
   description = "The migration instance type (VMwareToAzStackHCI or HyperVToAzStackHCI)"
 }
 
+variable "location" {
+  type        = string
+  default     = "westus2"
+  description = "Optional: The Azure region where resources will be deployed. If not specified, uses the resource group's location."
+}
+
 variable "project_name" {
   type        = string
   default     = "saif-project-012726"

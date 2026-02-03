@@ -26,6 +26,7 @@ provider "azapi" {}
 module "migrate_vm" {
   source = "../../"
 
+  location           = var.location
   name               = "vm-migration"
   parent_id          = var.parent_id
   instance_type      = var.instance_type
@@ -71,6 +72,14 @@ Description: The migration instance type (VMwareToAzStackHCI or HyperVToAzStackH
 Type: `string`
 
 Default: `"VMwareToAzStackHCI"`
+
+### <a name="input_location"></a> [location](#input\_location)
+
+Description: Optional: The Azure region where resources will be deployed. If not specified, uses the resource group's location.
+
+Type: `string`
+
+Default: `"westus2"`
 
 ### <a name="input_protected_item_id"></a> [protected\_item\_id](#input\_protected\_item\_id)
 

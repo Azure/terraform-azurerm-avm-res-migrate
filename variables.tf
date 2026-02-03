@@ -2,6 +2,11 @@
 # MIGRATION-SPECIFIC VARIABLES
 # ========================================
 
+variable "location" {
+  type        = string
+  description = "Azure region where resources should be deployed. Required when create_migrate_project is true."
+}
+
 # tflint-ignore: terraform_unused_declarations
 variable "name" {
   type        = string
@@ -127,12 +132,6 @@ A list of disks to include for replication (power user mode). Each object in the
 DESCRIPTION
 }
 
-variable "display_name" {
-  type        = string
-  default     = null
-  description = "Source machine display name for filtering"
-}
-
 variable "enable_telemetry" {
   type        = bool
   default     = true
@@ -185,12 +184,6 @@ variable "job_name" {
   description = "Specific job name to retrieve. If not provided, all jobs will be listed."
 }
 
-variable "location" {
-  type        = string
-  default     = null
-  description = "Azure region where resources should be deployed. Required when create_resource_group or create_migrate_project is true."
-}
-
 variable "lock" {
   type = object({
     kind = string
@@ -215,17 +208,6 @@ variable "machine_id" {
   type        = string
   default     = null
   description = "Machine ARM ID of the discovered server to migrate"
-}
-
-variable "machine_index" {
-  type        = number
-  default     = null
-  description = "Index of the discovered server from the list (1-based)"
-
-  validation {
-    condition     = var.machine_index == null || var.machine_index >= 1
-    error_message = "machine_index must be a positive integer (1 or greater)."
-  }
 }
 
 variable "machine_name" {

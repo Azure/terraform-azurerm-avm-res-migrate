@@ -47,8 +47,6 @@ The following resources are used by this module:
 - [modtm_telemetry.telemetry](https://registry.terraform.io/providers/azure/modtm/latest/docs/resources/telemetry) (resource)
 - [random_uuid.telemetry](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) (resource)
 - [azapi_client_config.telemetry](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/client_config) (data source)
-- [azapi_resource.discovered_machine](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
-- [azapi_resource.discovery_solution](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
 - [azapi_resource.migrate_project_existing](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
 - [azapi_resource.protected_item_by_id](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
 - [azapi_resource.protected_item_by_name](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
@@ -72,6 +70,12 @@ The following resources are used by this module:
 ## Required Inputs
 
 The following input variables are required:
+
+### <a name="input_location"></a> [location](#input\_location)
+
+Description: Azure region where resources should be deployed. Required when create\_migrate\_project is true.
+
+Type: `string`
 
 ### <a name="input_name"></a> [name](#input\_name)
 
@@ -195,14 +199,6 @@ list(object({
 
 Default: `[]`
 
-### <a name="input_display_name"></a> [display\_name](#input\_display\_name)
-
-Description: Source machine display name for filtering
-
-Type: `string`
-
-Default: `null`
-
 ### <a name="input_enable_telemetry"></a> [enable\_telemetry](#input\_enable\_telemetry)
 
 Description: This variable controls whether or not telemetry is enabled for the module.  
@@ -253,14 +249,6 @@ Type: `string`
 
 Default: `null`
 
-### <a name="input_location"></a> [location](#input\_location)
-
-Description: Azure region where resources should be deployed. Required when create\_resource\_group or create\_migrate\_project is true.
-
-Type: `string`
-
-Default: `null`
-
 ### <a name="input_lock"></a> [lock](#input\_lock)
 
 Description: Controls the Resource Lock configuration for this resource. The following properties can be specified:
@@ -284,14 +272,6 @@ Default: `null`
 Description: Machine ARM ID of the discovered server to migrate
 
 Type: `string`
-
-Default: `null`
-
-### <a name="input_machine_index"></a> [machine\_index](#input\_machine\_index)
-
-Description: Index of the discovered server from the list (1-based)
-
-Type: `number`
 
 Default: `null`
 

@@ -9,6 +9,12 @@ variable "instance_type" {
   description = "The migration instance type (VMwareToAzStackHCI or HyperVToAzStackHCI)"
 }
 
+variable "location" {
+  type        = string
+  default     = "westus2"
+  description = "Optional: The Azure region where resources will be deployed. If not specified, uses the resource group's location."
+}
+
 variable "protected_item_id" {
   type        = string
   default     = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-resource-group/providers/Microsoft.DataReplication/replicationVaults/my-vault/protectedItems/my-vm"

@@ -31,6 +31,7 @@ provider "azapi" {}
 module "replicate_vm" {
   source = "../../"
 
+  location                   = var.location
   name                       = "vm-replication"
   parent_id                  = var.parent_id
   custom_location_id         = var.custom_location_id
@@ -38,7 +39,6 @@ module "replicate_vm" {
   hyperv_generation          = var.hyperv_generation
   instance_type              = var.instance_type
   is_dynamic_memory_enabled  = var.is_dynamic_memory_enabled
-  location                   = var.location
   machine_id                 = var.machine_id
   nic_id                     = var.nic_id # For default user mode
   nics_to_include            = var.nics_to_include

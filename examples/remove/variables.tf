@@ -9,6 +9,12 @@ variable "force_remove" {
   description = "Specifies whether the replication needs to be force removed. Use with caution as force removal may leave resources in an inconsistent state."
 }
 
+variable "location" {
+  type        = string
+  default     = "westus2"
+  description = "Optional: The Azure region where resources will be deployed. If not specified, uses the resource group's location."
+}
+
 variable "tags" {
   type        = map(string)
   default     = {}

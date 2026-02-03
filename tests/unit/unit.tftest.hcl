@@ -47,6 +47,7 @@ variables {
   name             = "test-migrate"
   parent_id        = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/test-rg"
   enable_telemetry = false
+  location         = "eastus"
   project_name     = "test-project"
 }
 
